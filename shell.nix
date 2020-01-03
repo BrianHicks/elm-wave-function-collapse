@@ -15,6 +15,7 @@ stdenv.mkDerivation {
     # Elm
     elmPackages.elm
     elmPackages.elm-format
+    elmPackages.elm-live
     elmPackages.elm-test
   ];
 }
