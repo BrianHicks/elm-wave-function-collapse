@@ -25,6 +25,10 @@ letters =
 
 main : RootHtml.Html msg
 main =
-    letters
-        |> Grid2d.view Html.text
-        |> Html.toUnstyled
+    Html.toUnstyled <|
+        Html.div []
+            [ Html.h1 [] [ Html.text "Wave Function Collapse" ]
+            , Html.h2 [] [ Html.text "Source Image" ]
+            , Grid2d.view Html.text letters
+            , Html.h2 [] [ Html.text "Windows" ]
+            ]
