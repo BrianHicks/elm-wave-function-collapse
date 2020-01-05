@@ -5,7 +5,7 @@ import Grid2d
 import Html.Styled as Html
 
 
-main =
+letters =
     case
         Grid2d.fromRowsAndColumns
             [ [ "a", "b", "c", "d" ]
@@ -16,8 +16,12 @@ main =
     of
         Ok grid ->
             grid
-                |> Grid2d.view Html.text
-                |> Html.toUnstyled
 
-        Err whatevs ->
-            Html.toUnstyled (Html.text (Debug.toString whatevs))
+        Err problem ->
+            Debug.todo (Debug.toString problem)
+
+
+main =
+    letters
+        |> Grid2d.view Html.text
+        |> Html.toUnstyled
