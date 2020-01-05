@@ -66,17 +66,14 @@ crop rect (Grid grid) =
             }
 
 
-windows : Int -> Grid a -> List (Grid a)
-windows dirtySize ((Grid { width, height }) as grid) =
+windows : { width : Int, height : Int } -> Grid a -> List (Grid a)
+windows sizes ((Grid { width, height }) as grid) =
     let
-        size =
-            abs dirtySize
-
         columns =
-            List.range 0 (width - size)
+            List.range 0 (width - abs sizes.width)
 
         rows =
-            List.range 0 (height - size)
+            List.range 0 (height - abs sizes.height)
     in
     -- get coordinates
     rows
@@ -88,8 +85,8 @@ windows dirtySize ((Grid { width, height }) as grid) =
                 crop
                     { row = row
                     , column = column
-                    , width = size
-                    , height = size
+                    , width = sizes.width
+                    , height = sizes.height
                     }
                     grid
             )
