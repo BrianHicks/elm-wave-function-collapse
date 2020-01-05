@@ -1,15 +1,23 @@
 module Main exposing (..)
 
 import Browser
-import Css
+import Grid2d
 import Html.Styled as Html
-import Image2d
 
 
 main =
-    { pixels = [ Css.rgb 255 0 0, Css.rgb 255 255 255, Css.rgb 255 255 255, Css.rgb 255 0 0 ]
-    , width = 2
-    , height = 2
-    }
-        |> Image2d.view 10
-        |> Html.toUnstyled
+    case
+        Grid2d.fromRowsAndColumns
+            [ [ "a", "b", "c", "d" ]
+            , [ "e", "f", "g", "h" ]
+            , [ "i", "j", "k", "l" ]
+            , [ "m", "n", "o", "p" ]
+            ]
+    of
+        Ok grid ->
+            grid
+                |> Grid2d.view Html.text
+                |> Html.toUnstyled
+
+        Err whatevs ->
+            Html.toUnstyled (Html.text (Debug.toString whatevs))
