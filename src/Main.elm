@@ -10,10 +10,10 @@ letters : Grid String
 letters =
     case
         Grid2d.fromRowsAndColumns
-            [ [ "a", "b", "c", "d" ]
-            , [ "e", "f", "g", "h" ]
-            , [ "i", "j", "k", "l" ]
-            , [ "m", "n", "o", "p" ]
+            [ [ "┌", "─", "─", "┐" ]
+            , [ "│", "┌", "┐", "│" ]
+            , [ "│", "└", "┘", "│" ]
+            , [ "└", "─", "─", "┘" ]
             ]
     of
         Ok grid ->
