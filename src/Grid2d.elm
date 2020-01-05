@@ -73,10 +73,10 @@ windows dirtySize ((Grid { width, height }) as grid) =
             abs dirtySize
 
         columns =
-            List.range 0 (width - 1)
+            List.range 0 (width - size)
 
         rows =
-            List.range 0 (height - 1)
+            List.range 0 (height - size)
     in
     -- get coordinates
     rows
