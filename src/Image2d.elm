@@ -13,8 +13,8 @@ type alias Image =
     }
 
 
-toHtml : Float -> Image -> Html msg
-toHtml scale { pixels, width } =
+view : Float -> Image -> Html msg
+view scale { pixels, width } =
     pixels
         |> greedyGroupsOf width
         |> List.map

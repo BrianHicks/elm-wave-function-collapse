@@ -11,5 +11,5 @@ main =
     , width = 2
     , height = 2
     }
-        |> Image2d.toHtml 10
+        |> Image2d.view 10
         |> Html.toUnstyled
