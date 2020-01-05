@@ -1,4 +1,4 @@
-module Grid2d exposing (Grid, crop, fromRowsAndColumns, view)
+module Grid2d exposing (Grid, crop, fromRowsAndColumns, view, windows)
 
 import Array exposing (Array)
 import Css exposing (Color)
@@ -64,6 +64,35 @@ crop rect (Grid grid) =
             , width = rect.width
             , height = rect.height
             }
+
+
+windows : Int -> Grid a -> List (Grid a)
+windows dirtySize ((Grid { width, height }) as grid) =
+    let
+        size =
+            abs dirtySize
+
+        columns =
+            List.range 0 (width - 1)
+
+        rows =
+            List.range 0 (height - 1)
+    in
+    -- get coordinates
+    rows
+        |> List.map (\row -> List.map (\col -> ( row, col )) columns)
+        |> List.concat
+        -- get a list of crops
+        |> List.filterMap
+            (\( row, column ) ->
+                crop
+                    { row = row
+                    , column = column
+                    , width = size
+                    , height = size
+                    }
+                    grid
+            )
 
 
 {-| TODO: could probably do this with CSS grids but I'm not sure how.
