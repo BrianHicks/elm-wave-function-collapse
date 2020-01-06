@@ -1,5 +1,14 @@
 # Wave Function Collapse
 
+## How to Develop
+
+1. [have Nix](https://nixos.org/nix/) (it's available for Mac and Linux)
+2. [have direnv](https://direnv.net)
+3. `cd` here
+4. `direnv allow`
+5. `./develop.sh`
+6. Go to [localhost:8000](http://localhost:8000). The browser will reload automatically when you make changes.
+
 ## To Do / Done
 
 - [x] Read the input bitmap and count NxN patterns.
