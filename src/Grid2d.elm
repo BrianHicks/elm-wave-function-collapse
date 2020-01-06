@@ -57,6 +57,9 @@ fromRowsAndColumns rowsAndColumns =
             Err (MoreThanOneWidth widths)
 
 
+{-| Zoom in on a portion of a grid. If the row and column constraints are out
+of bounds, this function returns `Nothing`.
+-}
 crop : { row : Int, column : Int, width : Int, height : Int } -> Grid a -> Maybe (Grid a)
 crop rect (Grid grid) =
     if rect.row > grid.height || rect.column > grid.width then
@@ -112,6 +115,8 @@ column colNum (Grid { items, height }) =
             (Just Array.empty)
 
 
+{-| Get a number of windows over the given grid data. This is for WCF.
+-}
 windows : { width : Int, height : Int } -> Grid a -> List (Grid a)
 windows sizes ((Grid { width, height }) as grid) =
     let
