@@ -1,4 +1,4 @@
-module Grid2d exposing (Grid, crop, fromRowsAndColumns, view, windows)
+module Grid2d exposing (Grid, crop, fromRowsAndColumns, rotate, view, windows)
 
 import Array exposing (Array)
 import Css exposing (Color)
@@ -66,6 +66,45 @@ crop rect (Grid grid) =
             }
 
 
+{-| Rotate a grid 90° clockwise.
+-}
+rotate : Grid a -> Grid a
+rotate ((Grid { width, height }) as grid) =
+    let
+        newItems =
+            List.range 0 (width - 1)
+                |> List.map
+                    (\col ->
+                        column col grid
+                            |> Maybe.withDefault Array.empty
+                            |> Array.foldr Array.push Array.empty
+                    )
+                |> Array.fromList
+    in
+    Grid
+        { items = newItems
+        , height = width
+        , width = height
+        }
+
+
+column : Int -> Grid a -> Maybe (Array a)
+column colNum (Grid { items, height }) =
+    List.range 0 (height - 1)
+        |> List.foldl
+            (\row soFar ->
+                Maybe.andThen
+                    (\arr ->
+                        items
+                            |> Array.get row
+                            |> Maybe.andThen (Array.get colNum)
+                            |> Maybe.map (\val -> Array.push val arr)
+                    )
+                    soFar
+            )
+            (Just Array.empty)
+
+
 windows : { width : Int, height : Int } -> Grid a -> List (Grid a)
 windows sizes ((Grid { width, height }) as grid) =
     let
@@ -81,10 +120,10 @@ windows sizes ((Grid { width, height }) as grid) =
         |> List.concat
         -- get a list of crops
         |> List.filterMap
-            (\( row, column ) ->
+            (\( row, col ) ->
                 crop
                     { row = row
-                    , column = column
+                    , column = col
                     , width = sizes.width
                     , height = sizes.height
                     }
