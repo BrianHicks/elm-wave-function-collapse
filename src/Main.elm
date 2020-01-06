@@ -35,7 +35,6 @@ recurse =
             , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
             , [ t, k, t, t, t, t, t, t, t, t, t, t, k, t ]
             , [ t, k, t, k, k, k, k, k, k, k, k, t, k, t ]
-            , [ t, k, t, k, k, k, k, k, k, k, k, t, k, t ]
             , [ t, k, t, g, k, g, k, g, k, k, k, t, k, t ]
             , [ t, k, t, k, k, k, k, k, k, k, k, t, k, t ]
             , [ t, k, t, k, g, g, k, g, g, k, k, t, k, t ]
