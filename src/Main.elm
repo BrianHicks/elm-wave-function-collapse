@@ -8,14 +8,31 @@ import Html.Styled as Html
 import Html.Styled.Attributes exposing (css)
 
 
-letters : Grid String
-letters =
+boxes : Grid String
+boxes =
     case
         Grid2d.fromRowsAndColumns
             [ [ "┌", "─", "─", "┐" ]
             , [ "│", "┌", "┐", "│" ]
             , [ "│", "└", "┘", "│" ]
             , [ "└", "─", "─", "┘" ]
+            ]
+    of
+        Ok grid ->
+            grid
+
+        Err problem ->
+            Debug.todo (Debug.toString problem)
+
+
+letters : Grid String
+letters =
+    case
+        Grid2d.fromRowsAndColumns
+            [ [ "a", "b", "c", "d" ]
+            , [ "e", "f", "g", "h" ]
+            , [ "i", "j", "k", "l" ]
+            , [ "m", "n", "o", "p" ]
             ]
     of
         Ok grid ->
