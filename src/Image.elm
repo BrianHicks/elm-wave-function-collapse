@@ -1,4 +1,4 @@
-module Grid2d exposing (Grid, crop, fromRowsAndColumns, rotate, view, windows)
+module Image exposing (Image, crop, fromRowsAndColumns, rotate, view, windows)
 
 import Array exposing (Array)
 import Css exposing (Color)
@@ -7,8 +7,8 @@ import Html.Styled.Attributes exposing (css)
 import Set
 
 
-type Grid a
-    = Grid
+type Image a
+    = Image
         { -- rows x columns
           items : Array (Array a)
         , width : Int
@@ -27,7 +27,7 @@ If the sizes of the column arrays (the inner ones) don't match up, you'll get a
 `MoreThanOneWidth` error back from this function.
 
 -}
-fromRowsAndColumns : List (List a) -> Result FromRowsAndColumnsProblem (Grid a)
+fromRowsAndColumns : List (List a) -> Result FromRowsAndColumnsProblem (Image a)
 fromRowsAndColumns rowsAndColumns =
     let
         arrayified =
@@ -40,14 +40,14 @@ fromRowsAndColumns rowsAndColumns =
     in
     case widths of
         [] ->
-            (Ok << Grid)
+            (Ok << Image)
                 { items = arrayified
                 , width = 0
                 , height = Array.length arrayified
                 }
 
         [ width ] ->
-            (Ok << Grid)
+            (Ok << Image)
                 { items = arrayified
                 , width = width
                 , height = Array.length arrayified
@@ -60,13 +60,13 @@ fromRowsAndColumns rowsAndColumns =
 {-| Zoom in on a portion of a grid. If the row and column constraints are out
 of bounds, this function returns `Nothing`.
 -}
-crop : { row : Int, column : Int, width : Int, height : Int } -> Grid a -> Maybe (Grid a)
-crop rect (Grid grid) =
+crop : { row : Int, column : Int, width : Int, height : Int } -> Image a -> Maybe (Image a)
+crop rect (Image grid) =
     if rect.row > grid.height || rect.column > grid.width then
         Nothing
 
     else
-        (Just << Grid)
+        (Just << Image)
             { items =
                 grid.items
                     |> Array.slice rect.row (rect.row + rect.height)
@@ -78,8 +78,8 @@ crop rect (Grid grid) =
 
 {-| Rotate a grid 90° clockwise.
 -}
-rotate : Grid a -> Grid a
-rotate ((Grid { width, height }) as grid) =
+rotate : Image a -> Image a
+rotate ((Image { width, height }) as grid) =
     let
         newItems =
             List.range 0 (width - 1)
@@ -91,15 +91,15 @@ rotate ((Grid { width, height }) as grid) =
                     )
                 |> Array.fromList
     in
-    Grid
+    Image
         { items = newItems
         , height = width
         , width = height
         }
 
 
-column : Int -> Grid a -> Maybe (Array a)
-column colNum (Grid { items, height }) =
+column : Int -> Image a -> Maybe (Array a)
+column colNum (Image { items, height }) =
     List.range 0 (height - 1)
         |> List.foldl
             (\row soFar ->
@@ -117,8 +117,8 @@ column colNum (Grid { items, height }) =
 
 {-| Get a number of windows over the given grid data. This is for WCF.
 -}
-windows : { width : Int, height : Int } -> Grid a -> List (Grid a)
-windows sizes ((Grid { width, height }) as grid) =
+windows : { width : Int, height : Int } -> Image a -> List (Image a)
+windows sizes ((Image { width, height }) as grid) =
     let
         columns =
             List.range 0 (width - abs sizes.width)
@@ -145,8 +145,8 @@ windows sizes ((Grid { width, height }) as grid) =
 
 {-| TODO: could probably do this with CSS grids but I'm not sure how.
 -}
-view : (a -> Html msg) -> Grid a -> Html msg
-view viewItem (Grid { items }) =
+view : (a -> Html msg) -> Image a -> Html msg
+view viewItem (Image { items }) =
     items
         |> Array.map
             (Array.map (\item -> Html.td [] [ viewItem item ])
