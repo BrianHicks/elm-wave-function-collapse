@@ -1,16 +1,17 @@
 module Image exposing (Image, crop, fromRowsAndColumns, rotate, view, windows)
 
 import Array exposing (Array)
-import Css exposing (Color)
+import Color.Transparent as Color exposing (Color)
+import Css
 import Html.Styled as Html exposing (Html)
-import Html.Styled.Attributes exposing (css)
+import Html.Styled.Attributes as Attrs exposing (css, style)
 import Set
 
 
-type Image a
+type Image
     = Image
         { -- rows x columns
-          items : Array (Array a)
+          items : Array (Array Color)
         , width : Int
         , height : Int
         }
@@ -27,7 +28,7 @@ If the sizes of the column arrays (the inner ones) don't match up, you'll get a
 `MoreThanOneWidth` error back from this function.
 
 -}
-fromRowsAndColumns : List (List a) -> Result FromRowsAndColumnsProblem (Image a)
+fromRowsAndColumns : List (List Color) -> Result FromRowsAndColumnsProblem Image
 fromRowsAndColumns rowsAndColumns =
     let
         arrayified =
@@ -60,7 +61,7 @@ fromRowsAndColumns rowsAndColumns =
 {-| Zoom in on a portion of a grid. If the row and column constraints are out
 of bounds, this function returns `Nothing`.
 -}
-crop : { row : Int, column : Int, width : Int, height : Int } -> Image a -> Maybe (Image a)
+crop : { row : Int, column : Int, width : Int, height : Int } -> Image -> Maybe Image
 crop rect (Image grid) =
     if rect.row > grid.height || rect.column > grid.width then
         Nothing
@@ -78,7 +79,7 @@ crop rect (Image grid) =
 
 {-| Rotate a grid 90° clockwise.
 -}
-rotate : Image a -> Image a
+rotate : Image -> Image
 rotate ((Image { width, height }) as grid) =
     let
         newItems =
@@ -98,7 +99,7 @@ rotate ((Image { width, height }) as grid) =
         }
 
 
-column : Int -> Image a -> Maybe (Array a)
+column : Int -> Image -> Maybe (Array Color)
 column colNum (Image { items, height }) =
     List.range 0 (height - 1)
         |> List.foldl
@@ -117,7 +118,7 @@ column colNum (Image { items, height }) =
 
 {-| Get a number of windows over the given grid data. This is for WCF.
 -}
-windows : { width : Int, height : Int } -> Image a -> List (Image a)
+windows : { width : Int, height : Int } -> Image -> List Image
 windows sizes ((Image { width, height }) as grid) =
     let
         columns =
@@ -145,11 +146,19 @@ windows sizes ((Image { width, height }) as grid) =
 
 {-| TODO: could probably do this with CSS grids but I'm not sure how.
 -}
-view : (a -> Html msg) -> Image a -> Html msg
-view viewItem (Image { items }) =
+view : Image -> Html msg
+view (Image { items }) =
     items
         |> Array.map
-            (Array.map (\item -> Html.td [] [ viewItem item ])
+            (Array.map
+                (\color ->
+                    Html.td
+                        [ style "background-color" (Color.toRGBAString color)
+                        , Attrs.width 5
+                        , Attrs.height 5
+                        ]
+                        []
+                )
                 >> Array.toList
                 >> Html.tr []
             )
