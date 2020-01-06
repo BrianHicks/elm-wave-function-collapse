@@ -154,8 +154,8 @@ view (Image { items }) =
                 (\color ->
                     Html.td
                         [ style "background-color" (Color.toRGBAString color)
-                        , Attrs.width 5
-                        , Attrs.height 5
+                        , Attrs.width 10
+                        , Attrs.height 10
                         ]
                         []
                 )

@@ -3,8 +3,9 @@ module Main exposing (..)
 import Browser
 import Color.Transparent as Color
 import Css
+import Css.Reset as Reset
 import Html as RootHtml
-import Html.Styled as Html
+import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes exposing (css)
 import Image exposing (Image)
 
@@ -60,14 +61,56 @@ recurse =
 main : RootHtml.Html msg
 main =
     Html.toUnstyled <|
-        Html.div []
-            [ Html.h1 [] [ Html.text "Wave Function Collapse" ]
-            , Html.h2 [] [ Html.text "Source Image" ]
+        Html.div
+            [ css
+                [ Css.fontFamily Css.sansSerif
+                , Css.margin2 (Css.rem 2) Css.auto
+                , Css.width (Css.pct 80)
+                ]
+            ]
+            [ Reset.meyerV2
+            , Reset.borderBoxV201408
+            , h1 [ Html.text "Wave Function Collapse" ]
+            , h2 [ Html.text "Source Image" ]
             , Image.view recurse
-            , Html.h2 [] [ Html.text "Windows" ]
+            , h2 [ Html.text "3×3 Windows" ]
             , recurse
                 |> Image.windows { width = 3, height = 3 }
                 |> List.map Image.view
-                |> List.map (List.singleton >> Html.div [ css [ Css.border3 (Css.px 1) Css.solid (Css.hex "000"), Css.display Css.inlineBlock ] ])
+                |> List.map
+                    (\image ->
+                        Html.div
+                            [ css
+                                [ Css.border3 (Css.px 1) Css.solid (Css.hex "000")
+                                , Css.display Css.inlineBlock
+                                , Css.margin (Css.px 5)
+                                ]
+                            ]
+                            [ image ]
+                    )
                 |> Html.section []
             ]
+
+
+h1 : List (Html msg) -> Html msg
+h1 contents =
+    Html.h1
+        [ css
+            [ Css.fontSize (Css.rem 2)
+            , Css.lineHeight (Css.rem 2.5)
+            , Css.marginBottom (Css.rem 0.5)
+            , Css.fontWeight Css.bold
+            ]
+        ]
+        contents
+
+
+h2 : List (Html msg) -> Html msg
+h2 contents =
+    Html.h2
+        [ css
+            [ Css.fontSize (Css.rem 1.25)
+            , Css.lineHeight (Css.rem 1.5)
+            ]
+        ]
+        contents
