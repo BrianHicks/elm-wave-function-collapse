@@ -24,7 +24,7 @@ type FromRowsAndColumnsProblem
 and the inner lists are values in columns.
 
 If the sizes of the column arrays (the inner ones) don't match up, you'll get a
-`MoreTHanOneWidth` error back from this function.
+`MoreThanOneWidth` error back from this function.
 
 -}
 fromRowsAndColumns : List (List a) -> Result FromRowsAndColumnsProblem (Grid a)
