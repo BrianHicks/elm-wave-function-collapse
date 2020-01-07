@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, crop, fromRowsAndColumns, rotate, view, windows)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, rotate, view, windows)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -58,25 +58,6 @@ fromRowsAndColumns rowsAndColumns =
             Err (MoreThanOneWidth widths)
 
 
-{-| Zoom in on a portion of a grid. If the row and column constraints are out
-of bounds, this function returns `Nothing`.
--}
-crop : { row : Int, column : Int, width : Int, height : Int } -> Grid a -> Maybe (Grid a)
-crop rect (Grid grid) =
-    if rect.row > grid.height || rect.column > grid.width then
-        Nothing
-
-    else
-        (Just << Grid)
-            { items =
-                grid.items
-                    |> Array.slice rect.row (rect.row + rect.height)
-                    |> Array.map (Array.slice rect.column (rect.column + rect.width))
-            , width = rect.width
-            , height = rect.height
-            }
-
-
 {-| Rotate a grid 90° clockwise.
 -}
 rotate : Grid a -> Grid a
@@ -119,29 +100,45 @@ column colNum (Grid { items, height }) =
 {-| Get a number of windows over the given grid data. This is for WCF.
 -}
 windows : { width : Int, height : Int } -> Grid a -> List (Grid a)
-windows sizes ((Grid { width, height }) as grid) =
+windows sizes (Grid { width, height, items }) =
     let
         columns =
-            List.range 0 (width - abs sizes.width)
+            List.range 0 (width - 1)
 
         rows =
-            List.range 0 (height - abs sizes.height)
+            List.range 0 (height - 1)
+
+        -- when we reach the edge, we just need to wrap around.
+        -- Repeating once per axis should do it!
+        expanded =
+            Array.initialize (height * 2)
+                (\i ->
+                    let
+                        row =
+                            items
+                                |> Array.get (modBy height i)
+                                |> Maybe.withDefault Array.empty
+                    in
+                    Array.append row row
+                )
     in
     -- get coordinates
-    rows
-        |> List.map (\row -> List.map (\col -> ( row, col )) columns)
-        |> List.concat
-        -- get a list of crops
-        |> List.filterMap
-            (\( row, col ) ->
-                crop
-                    { row = row
-                    , column = col
-                    , width = sizes.width
-                    , height = sizes.height
-                    }
-                    grid
-            )
+    List.concatMap
+        (\row ->
+            List.map
+                (\col ->
+                    Grid
+                        { items =
+                            expanded
+                                |> Array.slice row (row + sizes.height)
+                                |> Array.map (Array.slice col (col + sizes.width))
+                        , width = sizes.width
+                        , height = sizes.height
+                        }
+                )
+                columns
+        )
+        rows
 
 
 {-| TODO: could probably do this with CSS grids but I'm not sure how.
