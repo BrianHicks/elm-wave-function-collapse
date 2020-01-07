@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, rotate, view, windows)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, rotate, set, view, windows)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -149,6 +149,23 @@ get coords (Grid { items }) =
     items
         |> Array.get coords.row
         |> Maybe.andThen (Array.get coords.column)
+
+
+set : { row : Int, column : Int } -> a -> Grid a -> Grid a
+set coords newValue (Grid grid) =
+    case Array.get coords.row grid.items of
+        Nothing ->
+            Grid grid
+
+        Just row ->
+            Grid
+                { grid
+                    | items =
+                        Array.set
+                            coords.row
+                            (Array.set coords.column newValue row)
+                            grid.items
+                }
 
 
 {-| TODO: could probably do this with CSS grids but I'm not sure how.

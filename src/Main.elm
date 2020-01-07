@@ -10,6 +10,7 @@ import Html as RootHtml
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes exposing (css, style)
 import Image exposing (Image)
+import Random
 import Wave
 
 
@@ -65,6 +66,13 @@ main =
     let
         windowSize =
             { width = 3, height = 3 }
+
+        windows =
+            Grid.windows windowSize recurse
+
+        ( wave, _ ) =
+            Wave.init { width = 20, height = 20 } windows
+                |> Wave.step (Random.initialSeed 0)
     in
     Html.toUnstyled <|
         Html.div
@@ -81,8 +89,7 @@ main =
             , Image.view recurse
             , Html.details []
                 [ Html.summary [] [ Html.text "Windows" ]
-                , recurse
-                    |> Grid.windows windowSize
+                , windows
                     |> List.map Image.view
                     |> List.map
                         (\image ->
@@ -98,42 +105,40 @@ main =
                     |> Html.section []
                 ]
             , h2 [ Html.text "Wave" ]
-            , recurse
-                |> Grid.windows windowSize
-                |> Wave.init { width = 20, height = 20 }
-                |> Wave.view
-                    (\colors ->
-                        let
-                            { reds, blues, greens, opacities } =
-                                colors
-                                    |> Set.toList
-                                    |> List.filterMap (Grid.get { row = 0, column = 0 })
-                                    |> List.foldl
-                                        (\color soFar ->
-                                            let
-                                                rgba =
-                                                    Color.toRGBA color
-                                            in
-                                            { reds = rgba.red :: soFar.reds
-                                            , blues = rgba.blue :: soFar.blues
-                                            , greens = rgba.green :: soFar.greens
-                                            , opacities = Color.opacityToFloat rgba.alpha :: soFar.opacities
-                                            }
-                                        )
-                                        { reds = [], greens = [], blues = [], opacities = [] }
+            , Wave.view
+                (\colors ->
+                    let
+                        { reds, blues, greens, opacities } =
+                            colors
+                                |> Set.toList
+                                |> List.filterMap (Grid.get { row = 0, column = 0 })
+                                |> List.foldl
+                                    (\color soFar ->
+                                        let
+                                            rgba =
+                                                Color.toRGBA color
+                                        in
+                                        { reds = rgba.red :: soFar.reds
+                                        , blues = rgba.blue :: soFar.blues
+                                        , greens = rgba.green :: soFar.greens
+                                        , opacities = Color.opacityToFloat rgba.alpha :: soFar.opacities
+                                        }
+                                    )
+                                    { reds = [], greens = [], blues = [], opacities = [] }
 
-                            average items =
-                                List.sum items / toFloat (List.length items)
-                        in
-                        Image.viewColor
-                            (Color.fromRGBA
-                                { red = average reds
-                                , green = average greens
-                                , blue = average blues
-                                , alpha = Color.customOpacity (average opacities)
-                                }
-                            )
-                    )
+                        average items =
+                            List.sum items / toFloat (List.length items)
+                    in
+                    Image.viewColor
+                        (Color.fromRGBA
+                            { red = average reds
+                            , green = average greens
+                            , blue = average blues
+                            , alpha = Color.customOpacity (average opacities)
+                            }
+                        )
+                )
+                wave
             ]
 
 

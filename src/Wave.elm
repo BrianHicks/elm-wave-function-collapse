@@ -1,4 +1,4 @@
-module Wave exposing (Wave, init, view)
+module Wave exposing (Wave, init, step, view)
 
 import Array exposing (Array)
 import AssocList as Dict exposing (Dict)
@@ -9,6 +9,7 @@ import Grid exposing (Grid)
 import Heap exposing (Heap)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes exposing (css)
+import Random exposing (Generator, Seed)
 
 
 type Wave a
@@ -56,7 +57,7 @@ init { width, height } windows =
                 { items = grid
                 , probabilities = probabilities
                 , entropies =
-                    List.range 0 height
+                    List.range 0 (height - 1)
                         |> List.concatMap
                             (\row ->
                                 List.map
@@ -66,7 +67,7 @@ init { width, height } windows =
                                         , entropy = startingEntropy
                                         }
                                     )
-                                    (List.range 0 width)
+                                    (List.range 0 (width - 1))
                             )
                         |> Heap.fromList (Heap.smallest |> Heap.by .entropy)
                 }
@@ -117,3 +118,61 @@ view viewItems (Wave { items }) =
                     Html.td [] [ viewItems remaining ]
         )
         items
+
+
+step : Seed -> Wave a -> ( Wave a, Seed )
+step seed (Wave wave) =
+    case Heap.pop wave.entropies of
+        Just ( { row, column }, newEntropies ) ->
+            case Grid.get { row = row, column = column } wave.items |> Maybe.map Cell.state of
+                Just (Cell.Remaining remaining) ->
+                    let
+                        ( chosen, newSeed ) =
+                            Random.step
+                                (wave.probabilities
+                                    |> Dict.filter (\k _ -> Set.member k remaining)
+                                    |> toWeights
+                                    |> Random.map (Maybe.map Cell.singleton)
+                                )
+                                seed
+                    in
+                    case chosen of
+                        Just newValue ->
+                            ( Wave
+                                { wave
+                                    | entropies = newEntropies
+                                    , items = Grid.set { row = row, column = column } newValue wave.items
+                                }
+                            , newSeed
+                            )
+
+                        Nothing ->
+                            -- TODO: this should probably return an error of
+                            -- some sort. It probably indicates that the
+                            -- remaining possibilities were not actually a
+                            -- subset of the probabilities, or something along
+                            -- those lines.
+                            ( Wave wave, newSeed )
+
+                Just Cell.Blocked ->
+                    ( Wave wave, seed )
+
+                -- otherwise we just move on
+                _ ->
+                    ( Wave { wave | entropies = newEntropies }, seed )
+
+        Nothing ->
+            ( Wave wave, seed )
+
+
+toWeights : Dict a Int -> Generator (Maybe a)
+toWeights dict =
+    case Dict.foldl (\k weight soFar -> ( toFloat weight, k ) :: soFar) [] dict of
+        [] ->
+            Random.constant Nothing
+
+        [ ( _, only ) ] ->
+            Random.map Just (Random.constant only)
+
+        first :: rest ->
+            Random.map Just (Random.weighted first rest)
