@@ -4,6 +4,7 @@ import Browser
 import Color.Transparent as Color
 import Css
 import Css.Reset as Reset
+import Grid
 import Html as RootHtml
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes exposing (css)
@@ -30,7 +31,7 @@ recurse =
             Color.fromRGBA { red = 43, green = 45, blue = 45, alpha = Color.opaque }
     in
     case
-        Image.fromRowsAndColumns
+        Grid.fromRowsAndColumns
             [ List.repeat 14 t
             , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
             , [ t, k, t, t, t, t, t, t, t, t, t, t, k, t ]
@@ -74,7 +75,7 @@ main =
             , Image.view recurse
             , h2 [ Html.text "3×3 Windows" ]
             , recurse
-                |> Image.windows { width = 3, height = 3 }
+                |> Grid.windows { width = 3, height = 3 }
                 |> List.map Image.view
                 |> List.map
                     (\image ->
