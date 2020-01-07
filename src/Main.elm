@@ -9,6 +9,7 @@ import Html as RootHtml
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes exposing (css)
 import Image exposing (Image)
+import Wave
 
 
 recurse : Image
@@ -89,6 +90,12 @@ main =
                             [ image ]
                     )
                 |> Html.section []
+            , h2 [ Html.text "Wave" ]
+            , recurse
+                |> Grid.windows { width = 3, height = 3 }
+                |> Wave.init { width = 20, height = 20 }
+                |> Debug.toString
+                |> Html.text
             ]
 
 
