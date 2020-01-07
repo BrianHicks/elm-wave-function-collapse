@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, rotate, set, view, windows)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, rotate, set, toArrays, view, windows)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -59,6 +59,11 @@ fromRowsAndColumnsArray rowsAndColumns =
 
         a :: b :: _ ->
             Err (MoreThanOneWidth widths)
+
+
+toArrays : Grid a -> Array (Array a)
+toArrays (Grid { items }) =
+    items
 
 
 {-| Rotate a grid 90° clockwise.
@@ -176,3 +181,19 @@ view viewItem (Grid { items }) =
         |> Array.map (Array.map viewItem >> Array.toList >> Html.tr [])
         |> Array.toList
         |> Html.table [ css [ Css.borderCollapse Css.collapse ] ]
+
+
+indexedMap : ({ row : Int, column : Int } -> a -> b) -> Grid a -> Grid b
+indexedMap fn (Grid grid) =
+    Grid
+        { items =
+            Array.indexedMap
+                (\rowNum row ->
+                    Array.indexedMap
+                        (\colNum val -> fn { row = rowNum, column = colNum } val)
+                        row
+                )
+                grid.items
+        , width = grid.width
+        , height = grid.height
+        }
