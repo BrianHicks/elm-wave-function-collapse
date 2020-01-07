@@ -62,6 +62,10 @@ recurse =
 
 main : RootHtml.Html msg
 main =
+    let
+        windowSize =
+            { width = 3, height = 3 }
+    in
     Html.toUnstyled <|
         Html.div
             [ css
@@ -75,25 +79,27 @@ main =
             , h1 [ Html.text "Wave Function Collapse" ]
             , h2 [ Html.text "Source Image" ]
             , Image.view recurse
-            , h2 [ Html.text "3×3 Windows" ]
-            , recurse
-                |> Grid.windows { width = 3, height = 3 }
-                |> List.map Image.view
-                |> List.map
-                    (\image ->
-                        Html.div
-                            [ css
-                                [ Css.border3 (Css.px 1) Css.solid (Css.hex "000")
-                                , Css.display Css.inlineBlock
-                                , Css.margin (Css.px 5)
+            , Html.details []
+                [ Html.summary [] [ Html.text "Windows" ]
+                , recurse
+                    |> Grid.windows windowSize
+                    |> List.map Image.view
+                    |> List.map
+                        (\image ->
+                            Html.div
+                                [ css
+                                    [ Css.border3 (Css.px 1) Css.solid (Css.hex "000")
+                                    , Css.display Css.inlineBlock
+                                    , Css.margin (Css.px 5)
+                                    ]
                                 ]
-                            ]
-                            [ image ]
-                    )
-                |> Html.section []
+                                [ image ]
+                        )
+                    |> Html.section []
+                ]
             , h2 [ Html.text "Wave" ]
             , recurse
-                |> Grid.windows { width = 3, height = 3 }
+                |> Grid.windows windowSize
                 |> Wave.init { width = 20, height = 20 }
                 |> Wave.view
                     (\colors ->
