@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, rotate, view, windows)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, rotate, view, windows)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -30,28 +30,31 @@ If the sizes of the column arrays (the inner ones) don't match up, you'll get a
 -}
 fromRowsAndColumns : List (List a) -> Result FromRowsAndColumnsProblem (Grid a)
 fromRowsAndColumns rowsAndColumns =
-    let
-        arrayified =
-            Array.fromList (List.map Array.fromList rowsAndColumns)
+    Array.fromList (List.map Array.fromList rowsAndColumns)
+        |> fromRowsAndColumnsArray
 
+
+fromRowsAndColumnsArray : Array (Array a) -> Result FromRowsAndColumnsProblem (Grid a)
+fromRowsAndColumnsArray rowsAndColumns =
+    let
         widths =
-            arrayified
+            rowsAndColumns
                 |> Array.foldl (\row soFar -> Set.insert (Array.length row) soFar) Set.empty
                 |> Set.toList
     in
     case widths of
         [] ->
             (Ok << Grid)
-                { items = arrayified
+                { items = rowsAndColumns
                 , width = 0
-                , height = Array.length arrayified
+                , height = Array.length rowsAndColumns
                 }
 
         [ width ] ->
             (Ok << Grid)
-                { items = arrayified
+                { items = rowsAndColumns
                 , width = width
-                , height = Array.length arrayified
+                , height = Array.length rowsAndColumns
                 }
 
         a :: b :: _ ->
