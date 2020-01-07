@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, rotate, view, windows)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, rotate, view, windows)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -100,7 +100,7 @@ column colNum (Grid { items, height }) =
             (Just Array.empty)
 
 
-{-| Get a number of windows over the given grid data. This is for WCF.
+{-| Get a number of windows over the given grid data.
 -}
 windows : { width : Int, height : Int } -> Grid a -> List (Grid a)
 windows sizes (Grid { width, height, items }) =
@@ -142,6 +142,13 @@ windows sizes (Grid { width, height, items }) =
                 columns
         )
         rows
+
+
+get : { row : Int, column : Int } -> Grid a -> Maybe a
+get coords (Grid { items }) =
+    items
+        |> Array.get coords.row
+        |> Maybe.andThen (Array.get coords.column)
 
 
 {-| TODO: could probably do this with CSS grids but I'm not sure how.
