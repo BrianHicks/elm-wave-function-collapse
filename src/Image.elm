@@ -1,4 +1,4 @@
-module Image exposing (Image, view)
+module Image exposing (Image, view, viewColor)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -13,14 +13,16 @@ type alias Image =
     Grid Color
 
 
+viewColor : Color -> Html msg
+viewColor color =
+    Html.td
+        [ style "background-color" (Color.toRGBAString color)
+        , Attrs.width 10
+        , Attrs.height 10
+        ]
+        []
+
+
 view : Image -> Html msg
 view =
-    Grid.view
-        (\color ->
-            Html.td
-                [ style "background-color" (Color.toRGBAString color)
-                , Attrs.width 10
-                , Attrs.height 10
-                ]
-                []
-        )
+    Grid.view viewColor
