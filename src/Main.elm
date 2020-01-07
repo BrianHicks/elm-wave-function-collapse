@@ -16,7 +16,7 @@ recurse =
     let
         -- Transparent
         t =
-            Color.fromRGBA { red = 0, green = 0, blue = 0, alpha = Color.transparent }
+            Color.fromRGBA { red = 255, green = 255, blue = 255, alpha = Color.transparent }
 
         -- White
         w =
