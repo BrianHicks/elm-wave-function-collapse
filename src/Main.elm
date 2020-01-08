@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Adjacency
 import AssocSet as Set
 import Browser
 import Color.Transparent as Color
@@ -218,6 +219,32 @@ view model =
                                         |> Html.text
                                     ]
                             )
+                    ]
+                , Html.div []
+                    [ Html.text "Rules"
+                    , Wave.getRules model.wave
+                        |> Adjacency.toList
+                        |> List.map
+                            (\{ from, to, offsetRows, offsetColumns } ->
+                                let
+                                    viewColor color =
+                                        Html.div
+                                            [ style "background-color" (Color.toRGBAString color)
+                                            , css [ Css.width (Css.px 10), Css.height (Css.px 10) ]
+                                            ]
+                                            []
+                                in
+                                Html.tr []
+                                    [ Html.td [] [ viewColor from ]
+                                    , Html.td [] [ Html.text (String.fromInt offsetRows) ]
+                                    , Html.td [] [ Html.text (String.fromInt offsetColumns) ]
+                                    , Html.td [ css [ Css.displayFlex ] ]
+                                        (Set.toList to
+                                            |> List.map viewColor
+                                        )
+                                    ]
+                            )
+                        |> Html.table []
                     ]
                 ]
             ]

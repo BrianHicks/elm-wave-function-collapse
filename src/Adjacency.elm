@@ -1,4 +1,4 @@
-module Adjacency exposing (Rule, Rules, combine, emptyRules, forColor, fromImage)
+module Adjacency exposing (Rule, Rules, combine, emptyRules, forColor, fromImage, toList)
 
 import Array
 import AssocList as Dict exposing (Dict)
@@ -35,6 +35,11 @@ forColor color (Rules rules) =
         )
         []
         rules
+
+
+toList : Rules -> List Rule
+toList (Rules guts) =
+    Dict.values guts
 
 
 emptyRules : Rules
