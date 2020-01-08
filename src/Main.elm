@@ -108,8 +108,10 @@ view model =
         Html.div
             [ css
                 [ Css.fontFamily Css.sansSerif
-                , Css.margin2 (Css.rem 2) Css.auto
+                , Css.margin2 (Css.rem 1) Css.auto
+                , Css.padding2 (Css.rem 1.5) (Css.rem 2)
                 , Css.width (Css.pct 80)
+                , Css.backgroundColor (Css.hex "F0F8FF")
                 ]
             ]
             [ Reset.meyerV2
