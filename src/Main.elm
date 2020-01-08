@@ -37,14 +37,14 @@ recurse =
         Grid.fromRowsAndColumns
             [ List.repeat 14 t
             , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
-            , [ t, k, t, t, t, t, t, t, t, t, t, t, k, t ]
-            , [ t, k, t, k, k, k, k, k, k, k, k, t, k, t ]
-            , [ t, k, t, g, k, g, k, g, k, k, k, t, k, t ]
-            , [ t, k, t, k, k, k, k, k, k, k, k, t, k, t ]
-            , [ t, k, t, k, g, g, k, g, g, k, k, t, k, t ]
-            , [ t, k, t, k, k, k, k, k, k, k, k, t, k, t ]
-            , [ t, k, t, k, k, k, k, k, k, k, k, t, k, t ]
-            , [ t, k, t, t, t, t, t, t, t, t, t, t, k, t ]
+            , [ t, k, w, w, w, w, w, w, w, w, w, w, k, t ]
+            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
+            , [ t, k, w, g, k, g, k, g, k, k, k, w, k, t ]
+            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
+            , [ t, k, w, k, g, g, k, g, g, k, k, w, k, t ]
+            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
+            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
+            , [ t, k, w, w, w, w, w, w, w, w, w, w, k, t ]
             , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
             , [ t, t, t, t, t, k, k, k, k, t, t, t, t, t ]
             , [ t, t, k, k, k, k, k, k, k, k, k, k, t, t ]
@@ -72,7 +72,7 @@ main =
 
         ( wave, _ ) =
             Wave.init { width = 20, height = 20 } windows
-                |> Wave.step (Random.initialSeed 0)
+                |> Wave.step (Random.initialSeed 8)
     in
     Html.toUnstyled <|
         Html.div

@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, rotate, set, toArrays, topLeft, view, windows)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, rotate, set, toArrays, topLeft, update, view, windows)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)

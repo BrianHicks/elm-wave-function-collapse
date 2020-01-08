@@ -1,4 +1,4 @@
-module Cell exposing (Cell, State(..), eliminate, fromList, possible, restrict, singleton, state)
+module Cell exposing (Cell, State(..), eliminateIf, fromList, possible, singleton, state)
 
 import AssocSet as Set exposing (Set)
 
@@ -17,14 +17,16 @@ singleton =
     Cell << Set.singleton
 
 
-eliminate : a -> Cell a -> Cell a
-eliminate item (Cell items) =
-    Cell (Set.remove item items)
+eliminateIf : (a -> Bool) -> Cell a -> Cell a
+eliminateIf cond (Cell items) =
+    let
+        done =
+            Set.filter cond items
 
-
-restrict : Set a -> Cell a -> Cell a
-restrict subset (Cell items) =
-    Cell (Set.intersect subset items)
+        _ =
+            Debug.log "size change" ( Set.size items, Set.size done )
+    in
+    Cell done
 
 
 type State a

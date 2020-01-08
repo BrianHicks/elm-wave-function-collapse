@@ -1,4 +1,4 @@
-module Adjacency exposing (Rule, Rules, combine, emptyRules, fromImage)
+module Adjacency exposing (Rule, Rules, combine, emptyRules, forColor, fromImage)
 
 import Array
 import AssocList as Dict exposing (Dict)
@@ -57,42 +57,46 @@ fromImage grid =
                     (\row outerRules ->
                         Array.foldl
                             (\( rowNum, column, value ) rules ->
-                                let
-                                    rule =
-                                        { from = topLeft
-                                        , to = Set.singleton value
-                                        , offsetRows = rowNum
-                                        , offsetColumns = column
-                                        }
+                                if rowNum == 0 && column == 0 then
+                                    rules
 
-                                    revRule =
-                                        { from = value
-                                        , to = Set.singleton topLeft
-                                        , offsetRows = -rowNum
-                                        , offsetColumns = -column
-                                        }
-                                in
-                                rules
-                                    |> Dict.update
-                                        ( topLeft, rowNum, column )
-                                        (\maybeExisting ->
-                                            case maybeExisting of
-                                                Nothing ->
-                                                    Just rule
+                                else
+                                    let
+                                        rule =
+                                            { from = topLeft
+                                            , to = Set.singleton value
+                                            , offsetRows = rowNum
+                                            , offsetColumns = column
+                                            }
 
-                                                Just existing ->
-                                                    Just (combineRule rule existing)
-                                        )
-                                    |> Dict.update
-                                        ( value, -rowNum, -column )
-                                        (\maybeExisting ->
-                                            case maybeExisting of
-                                                Nothing ->
-                                                    Just revRule
+                                        revRule =
+                                            { from = value
+                                            , to = Set.singleton topLeft
+                                            , offsetRows = -rowNum
+                                            , offsetColumns = -column
+                                            }
+                                    in
+                                    rules
+                                        |> Dict.update
+                                            ( topLeft, rowNum, column )
+                                            (\maybeExisting ->
+                                                case maybeExisting of
+                                                    Nothing ->
+                                                        Just rule
 
-                                                Just existing ->
-                                                    Just (combineRule revRule existing)
-                                        )
+                                                    Just existing ->
+                                                        Just (combineRule rule existing)
+                                            )
+                                        |> Dict.update
+                                            ( value, -rowNum, -column )
+                                            (\maybeExisting ->
+                                                case maybeExisting of
+                                                    Nothing ->
+                                                        Just revRule
+
+                                                    Just existing ->
+                                                        Just (combineRule revRule existing)
+                                            )
                             )
                             outerRules
                             row

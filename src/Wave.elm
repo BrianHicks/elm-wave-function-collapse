@@ -117,7 +117,7 @@ view viewItems (Wave { items }) =
         (\cell ->
             case Cell.state cell of
                 Cell.Blocked ->
-                    Html.td [] [ Html.text "X" ]
+                    Html.td [] [ Html.text "x" ]
 
                 Cell.Done item ->
                     viewItems (Set.singleton item)
@@ -140,21 +140,46 @@ step seed (Wave wave) =
                                 (wave.probabilities
                                     |> Dict.filter (\k _ -> Set.member k remaining)
                                     |> toWeights
-                                    |> Random.map (Maybe.map Cell.singleton)
                                 )
                                 seed
+
+                        chosenCell =
+                            Maybe.map Cell.singleton chosen
+
+                        maybeTopLeft =
+                            Maybe.andThen Grid.topLeft chosen
                     in
-                    case chosen of
-                        Just newValue ->
+                    case ( maybeTopLeft, chosenCell ) of
+                        ( Just topLeft, Just newValue ) ->
                             ( Wave
                                 { wave
                                     | entropies = newEntropies
-                                    , items = Grid.set { row = row, column = column } newValue wave.items
+                                    , items =
+                                        List.foldl
+                                            (\rule grid ->
+                                                Grid.update
+                                                    (Cell.eliminateIf
+                                                        (\image ->
+                                                            case Grid.topLeft image of
+                                                                Just color ->
+                                                                    Set.member color rule.to
+
+                                                                Nothing ->
+                                                                    True
+                                                        )
+                                                    )
+                                                    { row = row + rule.offsetRows
+                                                    , column = column + rule.offsetColumns
+                                                    }
+                                                    grid
+                                            )
+                                            (Grid.set { row = row, column = column } newValue wave.items)
+                                            (Adjacency.forColor topLeft wave.rules)
                                 }
                             , newSeed
                             )
 
-                        Nothing ->
+                        _ ->
                             -- TODO: this should probably return an error of
                             -- some sort. It probably indicates that the
                             -- remaining possibilities were not actually a
