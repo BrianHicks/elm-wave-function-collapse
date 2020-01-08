@@ -1,4 +1,4 @@
-module Cell exposing (Cell, State(..), eliminateIf, fromList, possible, singleton, state)
+module Cell exposing (Cell, State(..), eliminateIf, fromList, possible, singleton, state, toSet)
 
 import AssocSet as Set exposing (Set)
 
@@ -10,6 +10,11 @@ type Cell a
 fromList : List a -> Cell a
 fromList items =
     Cell (Set.fromList items)
+
+
+toSet : Cell a -> Set a
+toSet (Cell set) =
+    set
 
 
 singleton : a -> Cell a

@@ -131,7 +131,7 @@ view viewItems (Wave { items }) =
 step : Seed -> Wave -> ( Wave, Seed )
 step seed (Wave wave) =
     case Heap.pop wave.entropies of
-        Just ( { row, column }, newEntropies ) ->
+        Just ( { row, column }, poppedEntropies ) ->
             case Grid.get { row = row, column = column } wave.items |> Maybe.map Cell.state of
                 Just (Cell.Remaining remaining) ->
                     let
@@ -151,31 +151,43 @@ step seed (Wave wave) =
                     in
                     case ( maybeTopLeft, chosenCell ) of
                         ( Just topLeft, Just newValue ) ->
-                            ( Wave
-                                { wave
-                                    | entropies = newEntropies
-                                    , items =
-                                        List.foldl
-                                            (\rule grid ->
-                                                Grid.update
-                                                    (Cell.eliminateIf
-                                                        (\image ->
-                                                            case Grid.topLeft image of
-                                                                Just color ->
-                                                                    Set.member color rule.to
-
-                                                                Nothing ->
-                                                                    True
-                                                        )
-                                                    )
+                            let
+                                ( newItems, newEntropies ) =
+                                    List.foldl
+                                        (\rule ( grid, entropies ) ->
+                                            let
+                                                coords =
                                                     { row = row + rule.offsetRows
                                                     , column = column + rule.offsetColumns
                                                     }
-                                                    grid
+                                            in
+                                            ( Grid.update
+                                                (Cell.eliminateIf
+                                                    (\image ->
+                                                        case Grid.topLeft image of
+                                                            Just color ->
+                                                                Set.member color rule.to
+
+                                                            Nothing ->
+                                                                True
+                                                    )
+                                                )
+                                                coords
+                                                grid
+                                            , Heap.push
+                                                { row = coords.row
+                                                , column = coords.column
+                                                , entropy = entropy wave.probabilities (Cell.toSet newValue)
+                                                }
+                                                entropies
                                             )
-                                            (Grid.set { row = row, column = column } newValue wave.items)
-                                            (Adjacency.forColor topLeft wave.rules)
-                                }
+                                        )
+                                        ( Grid.set { row = row, column = column } newValue wave.items
+                                        , poppedEntropies
+                                        )
+                                        (Adjacency.forColor topLeft wave.rules)
+                            in
+                            ( Wave { wave | entropies = newEntropies, items = newItems }
                             , newSeed
                             )
 
@@ -190,9 +202,16 @@ step seed (Wave wave) =
                 Just Cell.Blocked ->
                     ( Wave wave, seed )
 
-                -- otherwise we just move on
-                _ ->
-                    ( Wave { wave | entropies = newEntropies }, seed )
+                -- it's fine if the cell was already done. We have duplicate
+                -- coordinates in the heap (trading off memory to avoid having
+                -- to recalculate every entropy every time.)
+                Just (Cell.Done _) ->
+                    ( Wave { wave | entropies = poppedEntropies }, seed )
+
+                -- likewise, it's fine if the stack is empty. That just means
+                -- we're done!
+                Nothing ->
+                    ( Wave wave, seed )
 
         Nothing ->
             ( Wave wave, seed )
