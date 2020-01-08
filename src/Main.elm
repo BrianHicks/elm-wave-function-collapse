@@ -23,6 +23,7 @@ type alias Model =
     , windowSize : { width : Int, height : Int }
     , windows : List Image
     , wave : Wave
+    , waveSize : { width : Int, height : Int }
     , seed : Random.Seed
     , running : Bool
     }
@@ -50,7 +51,8 @@ init _ =
     ( { image = image
       , windowSize = windowSize
       , windows = windows
-      , wave = Wave.init { width = 20, height = 20 } windows
+      , wave = Wave.init { width = 10, height = 10 } windows
+      , waveSize = { width = 10, height = 10 }
       , seed = Random.initialSeed 0
       , running = False
       }
@@ -62,7 +64,10 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Reset dimensions ->
-            ( { model | wave = Wave.init dimensions model.windows }
+            ( { model
+                | wave = Wave.init dimensions model.windows
+                , waveSize = dimensions
+              }
             , Cmd.none
             )
 
@@ -197,6 +202,22 @@ view model =
                         [ Html.text "Total: "
                         , Html.text (String.fromInt (Heap.size entropies))
                         ]
+                    , entropies
+                        |> Heap.toList
+                        |> List.foldl
+                            (\item -> Grid.update (Heap.push item) { row = item.row, column = item.column })
+                            (Grid.initialize { rows = model.waveSize.height, columns = model.waveSize.width }
+                                (\_ -> Heap.empty (Heap.smallest |> Heap.by .entropy))
+                            )
+                        |> Grid.view
+                            (\heap ->
+                                Html.td [ css [ Css.padding (Css.px 2) ] ]
+                                    [ Heap.peek heap
+                                        |> Maybe.map (.entropy >> String.fromFloat >> String.left 4)
+                                        |> Maybe.withDefault "0"
+                                        |> Html.text
+                                    ]
+                            )
                     ]
                 ]
             ]

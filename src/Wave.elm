@@ -154,30 +154,33 @@ step seed (Wave wave) =
                                                     , column = column + rule.offsetColumns
                                                     }
                                             in
-                                            if coords.row < wave.height && coords.row >= 0 && coords.column < wave.width && coords.column >= 0 then
-                                                ( Grid.update
-                                                    (Cell.eliminateIf
-                                                        (\image ->
-                                                            case Grid.topLeft image of
-                                                                Just color ->
-                                                                    Set.member color rule.to
+                                            case Grid.get coords grid of
+                                                Just cell ->
+                                                    let
+                                                        reducedPossibilities =
+                                                            Cell.eliminateIf
+                                                                (\image ->
+                                                                    case Grid.topLeft image of
+                                                                        Just color ->
+                                                                            Set.member color rule.to
 
-                                                                Nothing ->
-                                                                    True
-                                                        )
+                                                                        Nothing ->
+                                                                            True
+                                                                )
+                                                                cell
+
+                                                        reducedEntropy =
+                                                            { row = coords.row
+                                                            , column = coords.column
+                                                            , entropy = entropy wave.probabilities (Cell.toSet reducedPossibilities)
+                                                            }
+                                                    in
+                                                    ( Grid.set coords reducedPossibilities grid
+                                                    , Heap.push reducedEntropy entropies
                                                     )
-                                                    coords
-                                                    grid
-                                                , Heap.push
-                                                    { row = coords.row
-                                                    , column = coords.column
-                                                    , entropy = entropy wave.probabilities (Cell.toSet newValue)
-                                                    }
-                                                    entropies
-                                                )
 
-                                            else
-                                                ( grid, entropies )
+                                                Nothing ->
+                                                    ( grid, entropies )
                                         )
                                         ( Grid.set { row = row, column = column } newValue wave.items
                                         , poppedEntropies

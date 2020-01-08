@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, rotate, set, toArrays, topLeft, update, view, windows)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, initialize, rotate, set, toArrays, topLeft, update, view, windows)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -32,6 +32,15 @@ fromRowsAndColumns : List (List a) -> Result FromRowsAndColumnsProblem (Grid a)
 fromRowsAndColumns rowsAndColumns =
     Array.fromList (List.map Array.fromList rowsAndColumns)
         |> fromRowsAndColumnsArray
+
+
+initialize : { rows : Int, columns : Int } -> ({ row : Int, column : Int } -> a) -> Grid a
+initialize { rows, columns } init =
+    Grid
+        { items = Array.initialize rows (\row -> Array.initialize columns (\colNum -> init { row = row, column = colNum }))
+        , width = columns
+        , height = rows
+        }
 
 
 fromRowsAndColumnsArray : Array (Array a) -> Result FromRowsAndColumnsProblem (Grid a)
