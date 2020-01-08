@@ -1,5 +1,6 @@
 module Wave exposing (Wave, init, step, view)
 
+import Adjacency exposing (Rules)
 import Array exposing (Array)
 import AssocList as Dict exposing (Dict)
 import AssocSet as Set exposing (Set)
@@ -9,18 +10,20 @@ import Grid exposing (Grid)
 import Heap exposing (Heap)
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes exposing (css)
+import Image exposing (Image)
 import Random exposing (Generator, Seed)
 
 
-type Wave a
+type Wave
     = Wave
-        { items : Grid (Cell a)
-        , probabilities : Dict a Int
+        { items : Grid (Cell Image)
+        , probabilities : Dict Image Int
+        , rules : Rules
         , entropies : Heap { row : Int, column : Int, entropy : Float }
         }
 
 
-init : { width : Int, height : Int } -> List a -> Wave a
+init : { width : Int, height : Int } -> List Image -> Wave
 init { width, height } windows =
     let
         rowsAndColumns =
@@ -70,6 +73,11 @@ init { width, height } windows =
                                     (List.range 0 (width - 1))
                             )
                         |> Heap.fromList (Heap.smallest |> Heap.by .entropy)
+                , rules =
+                    List.foldl
+                        (\window rules -> Adjacency.combine rules (Adjacency.fromImage window))
+                        Adjacency.emptyRules
+                        windows
                 }
 
         -- TODO: there should be a better way to deal with this if this
@@ -103,7 +111,7 @@ entropy probabilities possibilities =
         |> List.sum
 
 
-view : (Set a -> Html msg) -> Wave a -> Html msg
+view : (Set Image -> Html msg) -> Wave -> Html msg
 view viewItems (Wave { items }) =
     Grid.view
         (\cell ->
@@ -120,7 +128,7 @@ view viewItems (Wave { items }) =
         items
 
 
-step : Seed -> Wave a -> ( Wave a, Seed )
+step : Seed -> Wave -> ( Wave, Seed )
 step seed (Wave wave) =
     case Heap.pop wave.entropies of
         Just ( { row, column }, newEntropies ) ->
