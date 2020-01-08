@@ -23,7 +23,14 @@ entropy probabilities possibilities =
 
                     probability =
                         frequency / total
+
+                    out =
+                        -probability * logBase 2 probability
                 in
-                -probability * logBase 2 probability
+                if isNaN out then
+                    0
+
+                else
+                    out
             )
         |> List.sum
