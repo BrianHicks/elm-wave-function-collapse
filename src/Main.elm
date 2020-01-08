@@ -9,71 +9,78 @@ import Grid
 import Html as RootHtml
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes exposing (css, style)
+import Html.Styled.Events as Events
 import Image exposing (Image)
 import Random
-import Wave
+import Wave exposing (Wave)
 
 
-recurse : Image
-recurse =
+type alias Model =
+    { image : Image
+    , windowSize : { width : Int, height : Int }
+    , windows : List Image
+    , wave : Wave
+    , seed : Random.Seed
+    }
+
+
+type Msg
+    = Reset { width : Int, height : Int }
+    | Step
+
+
+init : () -> ( Model, Cmd Msg )
+init _ =
     let
-        -- Transparent
-        t =
-            Color.fromRGBA { red = 255, green = 255, blue = 255, alpha = Color.transparent }
+        image =
+            Image.recurse
 
-        -- White
-        w =
-            Color.fromRGBA { red = 255, green = 255, blue = 255, alpha = Color.opaque }
-
-        -- Green
-        g =
-            Color.fromRGBA { red = 62, green = 192, blue = 108, alpha = Color.opaque }
-
-        -- Key (black)
-        k =
-            Color.fromRGBA { red = 43, green = 45, blue = 45, alpha = Color.opaque }
-    in
-    case
-        Grid.fromRowsAndColumns
-            [ List.repeat 14 t
-            , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
-            , [ t, k, w, w, w, w, w, w, w, w, w, w, k, t ]
-            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
-            , [ t, k, w, g, k, g, k, g, k, k, k, w, k, t ]
-            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
-            , [ t, k, w, k, g, g, k, g, g, k, k, w, k, t ]
-            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
-            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
-            , [ t, k, w, w, w, w, w, w, w, w, w, w, k, t ]
-            , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
-            , [ t, t, t, t, t, k, k, k, k, t, t, t, t, t ]
-            , [ t, t, k, k, k, k, k, k, k, k, k, k, t, t ]
-            , [ t, k, k, k, w, k, w, k, w, k, w, k, k, t ]
-            , [ t, k, k, w, k, w, k, w, k, w, k, k, k, t ]
-            , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
-            , List.repeat 14 t
-            ]
-    of
-        Ok grid ->
-            grid
-
-        Err problem ->
-            Debug.todo (Debug.toString problem)
-
-
-main : RootHtml.Html msg
-main =
-    let
         windowSize =
             { width = 3, height = 3 }
 
         windows =
-            Grid.windows windowSize recurse
-
-        ( wave, _ ) =
-            Wave.init { width = 20, height = 20 } windows
-                |> Wave.step (Random.initialSeed 8)
+            Grid.windows windowSize image
     in
+    ( { image = image
+      , windowSize = windowSize
+      , windows = windows
+      , wave = Wave.init { width = 20, height = 20 } windows
+      , seed = Random.initialSeed 0
+      }
+    , Cmd.none
+    )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        Reset dimensions ->
+            ( { model | wave = Wave.init dimensions model.windows }
+            , Cmd.none
+            )
+
+        Step ->
+            let
+                ( newWave, newSeed ) =
+                    Wave.step model.seed model.wave
+            in
+            ( { model | wave = newWave, seed = newSeed }
+            , Cmd.none
+            )
+
+
+main : Program () Model Msg
+main =
+    Browser.element
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = \_ -> Sub.none
+        }
+
+
+view : Model -> RootHtml.Html Msg
+view model =
     Html.toUnstyled <|
         Html.div
             [ css
@@ -86,10 +93,10 @@ main =
             , Reset.borderBoxV201408
             , h1 [ Html.text "Wave Function Collapse" ]
             , h2 [ Html.text "Source Image" ]
-            , Image.view recurse
+            , Image.view model.image
             , Html.details []
                 [ Html.summary [] [ Html.text "Windows" ]
-                , windows
+                , model.windows
                     |> List.map Image.view
                     |> List.map
                         (\image ->
@@ -105,6 +112,7 @@ main =
                     |> Html.section []
                 ]
             , h2 [ Html.text "Wave" ]
+            , Html.button [ Events.onClick Step ] [ Html.text "Step" ]
             , Wave.view
                 (\colors ->
                     let
@@ -138,7 +146,7 @@ main =
                             }
                         )
                 )
-                wave
+                model.wave
             ]
 
 
