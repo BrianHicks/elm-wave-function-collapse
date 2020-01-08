@@ -6,6 +6,7 @@ import Color.Transparent as Color
 import Css
 import Css.Reset as Reset
 import Grid
+import Heap
 import Html as RootHtml
 import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes exposing (css, style)
@@ -136,40 +137,68 @@ view model =
             , Html.button [ Events.onClick Step ] [ Html.text "Step" ]
             , Html.button [ Events.onClick (Reset { width = 10, height = 10 }) ] [ Html.text "Reset (10x10)" ]
             , Html.button [ Events.onClick (Reset { width = 20, height = 20 }) ] [ Html.text "Reset (20x20)" ]
-            , Wave.view
-                (\colors ->
-                    let
-                        { reds, blues, greens, opacities } =
-                            colors
-                                |> Set.toList
-                                |> List.filterMap Grid.topLeft
-                                |> List.foldl
-                                    (\color soFar ->
-                                        let
-                                            rgba =
-                                                Color.toRGBA color
-                                        in
-                                        { reds = rgba.red :: soFar.reds
-                                        , blues = rgba.blue :: soFar.blues
-                                        , greens = rgba.green :: soFar.greens
-                                        , opacities = Color.opacityToFloat rgba.alpha :: soFar.opacities
-                                        }
-                                    )
-                                    { reds = [], greens = [], blues = [], opacities = [] }
+            , Html.div [ css [ Css.displayFlex, Css.justifyContent Css.spaceAround ] ]
+                [ Wave.view
+                    (\colors ->
+                        let
+                            { reds, blues, greens, opacities } =
+                                colors
+                                    |> Set.toList
+                                    |> List.filterMap Grid.topLeft
+                                    |> List.foldl
+                                        (\color soFar ->
+                                            let
+                                                rgba =
+                                                    Color.toRGBA color
+                                            in
+                                            { reds = rgba.red :: soFar.reds
+                                            , blues = rgba.blue :: soFar.blues
+                                            , greens = rgba.green :: soFar.greens
+                                            , opacities = Color.opacityToFloat rgba.alpha :: soFar.opacities
+                                            }
+                                        )
+                                        { reds = [], greens = [], blues = [], opacities = [] }
 
-                        average items =
-                            List.sum items / toFloat (List.length items)
-                    in
-                    Image.viewColor
-                        (Color.fromRGBA
-                            { red = average reds
-                            , green = average greens
-                            , blue = average blues
-                            , alpha = Color.customOpacity (average opacities)
-                            }
-                        )
-                )
-                model.wave
+                            average items =
+                                List.sum items / toFloat (List.length items)
+                        in
+                        Image.viewColor
+                            (Color.fromRGBA
+                                { red = average reds
+                                , green = average greens
+                                , blue = average blues
+                                , alpha = Color.customOpacity (average opacities)
+                                }
+                            )
+                    )
+                    model.wave
+                , let
+                    entropies =
+                        Wave.getEntropies model.wave
+                  in
+                  Html.div []
+                    [ Html.text "Entropy Info"
+                    , Html.p []
+                        [ Html.text "Next: "
+                        , case Heap.peek entropies of
+                            Nothing ->
+                                Html.text "Nothing"
+
+                            Just { row, column, entropy } ->
+                                Html.span []
+                                    [ Html.text (String.fromFloat entropy)
+                                    , Html.text " @ "
+                                    , Html.text (String.fromInt row)
+                                    , Html.text ","
+                                    , Html.text (String.fromInt column)
+                                    ]
+                        ]
+                    , Html.p []
+                        [ Html.text "Total: "
+                        , Html.text (String.fromInt (Heap.size entropies))
+                        ]
+                    ]
+                ]
             ]
 
 

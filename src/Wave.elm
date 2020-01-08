@@ -1,4 +1,4 @@
-module Wave exposing (Wave, init, step, view)
+module Wave exposing (Wave, getEntropies, init, step, view)
 
 import Adjacency exposing (Rules)
 import Array exposing (Array)
@@ -23,6 +23,19 @@ type Wave
         , rules : Rules
         , entropies : Heap { row : Int, column : Int, entropy : Float }
         }
+
+
+
+-- DEBUGGING
+
+
+getEntropies : Wave -> Heap { row : Int, column : Int, entropy : Float }
+getEntropies (Wave guts) =
+    guts.entropies
+
+
+
+-- END DEBUGGING
 
 
 init : { width : Int, height : Int } -> List Image -> Wave
