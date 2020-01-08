@@ -17,6 +17,8 @@ import Random exposing (Generator, Seed)
 type Wave
     = Wave
         { items : Grid (Cell Image)
+        , width : Int
+        , height : Int
         , probabilities : Dict Image Int
         , rules : Rules
         , entropies : Heap { row : Int, column : Int, entropy : Float }
@@ -78,6 +80,8 @@ init { width, height } windows =
                         (\window rules -> Adjacency.combine rules (Adjacency.fromImage window))
                         Adjacency.emptyRules
                         windows
+                , width = width
+                , height = height
                 }
 
         -- TODO: there should be a better way to deal with this if this
@@ -161,26 +165,30 @@ step seed (Wave wave) =
                                                     , column = column + rule.offsetColumns
                                                     }
                                             in
-                                            ( Grid.update
-                                                (Cell.eliminateIf
-                                                    (\image ->
-                                                        case Grid.topLeft image of
-                                                            Just color ->
-                                                                Set.member color rule.to
+                                            if coords.row < wave.height && coords.row >= 0 && coords.column < wave.width && coords.column >= 0 then
+                                                ( Grid.update
+                                                    (Cell.eliminateIf
+                                                        (\image ->
+                                                            case Grid.topLeft image of
+                                                                Just color ->
+                                                                    Set.member color rule.to
 
-                                                            Nothing ->
-                                                                True
+                                                                Nothing ->
+                                                                    True
+                                                        )
                                                     )
+                                                    coords
+                                                    grid
+                                                , Heap.push
+                                                    { row = coords.row
+                                                    , column = coords.column
+                                                    , entropy = entropy wave.probabilities (Cell.toSet newValue)
+                                                    }
+                                                    entropies
                                                 )
-                                                coords
-                                                grid
-                                            , Heap.push
-                                                { row = coords.row
-                                                , column = coords.column
-                                                , entropy = entropy wave.probabilities (Cell.toSet newValue)
-                                                }
-                                                entropies
-                                            )
+
+                                            else
+                                                ( grid, entropies )
                                         )
                                         ( Grid.set { row = row, column = column } newValue wave.items
                                         , poppedEntropies
@@ -206,7 +214,7 @@ step seed (Wave wave) =
                 -- coordinates in the heap (trading off memory to avoid having
                 -- to recalculate every entropy every time.)
                 Just (Cell.Done _) ->
-                    ( Wave { wave | entropies = poppedEntropies }, seed )
+                    step seed (Wave { wave | entropies = poppedEntropies })
 
                 -- likewise, it's fine if the stack is empty. That just means
                 -- we're done!

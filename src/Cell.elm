@@ -24,14 +24,7 @@ singleton =
 
 eliminateIf : (a -> Bool) -> Cell a -> Cell a
 eliminateIf cond (Cell items) =
-    let
-        done =
-            Set.filter cond items
-
-        _ =
-            Debug.log "size change" ( Set.size items, Set.size done )
-    in
-    Cell done
+    Cell (Set.filter cond items)
 
 
 type State a
