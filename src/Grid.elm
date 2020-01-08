@@ -178,6 +178,16 @@ set coords newValue (Grid grid) =
                 }
 
 
+update : (a -> a) -> { row : Int, column : Int } -> Grid a -> Grid a
+update fn coords grid =
+    case get coords grid of
+        Just item ->
+            set coords (fn item) grid
+
+        Nothing ->
+            grid
+
+
 {-| TODO: could probably do this with CSS grids but I'm not sure how.
 -}
 view : (a -> Html msg) -> Grid a -> Html msg
