@@ -40,7 +40,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         image =
-            Image.recurse
+            Image.plus
 
         windowSize =
             { width = 3, height = 3 }
