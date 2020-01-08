@@ -1,4 +1,4 @@
-module Image exposing (Image, plus, recurse, view, viewColor)
+module Image exposing (Image, bars, recurse, view, viewColor)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -75,21 +75,25 @@ recurse =
             Debug.todo (Debug.toString problem)
 
 
-plus : Image
-plus =
+bars : Image
+bars =
     let
         b =
             Color.fromRGBA { red = 0, green = 0, blue = 255, alpha = Color.opaque }
+
+        w =
+            Color.fromRGBA { red = 200, green = 200, blue = 200, alpha = Color.opaque }
 
         k =
             Color.fromRGBA { red = 0, green = 0, blue = 0, alpha = Color.opaque }
     in
     case
         Grid.fromRowsAndColumns
-            [ [ k, b, k, k ]
-            , [ k, b, k, k ]
-            , [ b, b, b, b ]
-            , [ k, b, k, k ]
+            [ [ k, k, k, k, k ]
+            , [ b, b, b, b, b ]
+            , [ w, w, w, w, w ]
+            , [ b, b, b, b, b ]
+            , [ k, k, k, k, k ]
             ]
     of
         Ok grid ->
