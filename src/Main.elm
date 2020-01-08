@@ -72,7 +72,7 @@ update msg model =
             in
             ( { model | wave = newWave, seed = newSeed }
             , if model.running then
-                Task.perform (\_ -> Step) (Process.sleep 100)
+                Task.perform (\_ -> Step) (Process.sleep 0)
 
               else
                 Cmd.none
