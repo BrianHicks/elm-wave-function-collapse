@@ -1,4 +1,4 @@
-module Image exposing (Image, view, viewColor)
+module Image exposing (Image, recurse, view, viewColor)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -26,3 +26,50 @@ viewColor color =
 view : Image -> Html msg
 view =
     Grid.view viewColor
+
+
+recurse : Image
+recurse =
+    let
+        -- Transparent
+        t =
+            Color.fromRGBA { red = 255, green = 255, blue = 255, alpha = Color.transparent }
+
+        -- White
+        w =
+            Color.fromRGBA { red = 255, green = 255, blue = 255, alpha = Color.opaque }
+
+        -- Green
+        g =
+            Color.fromRGBA { red = 62, green = 192, blue = 108, alpha = Color.opaque }
+
+        -- Key (black)
+        k =
+            Color.fromRGBA { red = 43, green = 45, blue = 45, alpha = Color.opaque }
+    in
+    case
+        Grid.fromRowsAndColumns
+            [ List.repeat 14 t
+            , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
+            , [ t, k, w, w, w, w, w, w, w, w, w, w, k, t ]
+            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
+            , [ t, k, w, g, k, g, k, g, k, k, k, w, k, t ]
+            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
+            , [ t, k, w, k, g, g, k, g, g, k, k, w, k, t ]
+            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
+            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
+            , [ t, k, w, w, w, w, w, w, w, w, w, w, k, t ]
+            , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
+            , [ t, t, t, t, t, k, k, k, k, t, t, t, t, t ]
+            , [ t, t, k, k, k, k, k, k, k, k, k, k, t, t ]
+            , [ t, k, k, k, w, k, w, k, w, k, w, k, k, t ]
+            , [ t, k, k, w, k, w, k, w, k, w, k, k, k, t ]
+            , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
+            , List.repeat 14 t
+            ]
+    of
+        Ok grid ->
+            grid
+
+        Err problem ->
+            Debug.todo (Debug.toString problem)
