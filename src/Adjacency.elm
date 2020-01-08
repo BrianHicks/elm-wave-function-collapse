@@ -25,7 +25,7 @@ fromGrid grid =
         arrays =
             Grid.toArrays grid
     in
-    case Grid.get { row = 0, column = 0 } grid of
+    case Grid.topLeft grid of
         Just topLeft ->
             grid
                 |> Grid.indexedMap

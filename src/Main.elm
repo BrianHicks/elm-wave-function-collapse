@@ -111,7 +111,7 @@ main =
                         { reds, blues, greens, opacities } =
                             colors
                                 |> Set.toList
-                                |> List.filterMap (Grid.get { row = 0, column = 0 })
+                                |> List.filterMap Grid.topLeft
                                 |> List.foldl
                                     (\color soFar ->
                                         let

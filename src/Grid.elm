@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, rotate, set, toArrays, view, windows)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, rotate, set, toArrays, topLeft, view, windows)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -154,6 +154,11 @@ get coords (Grid { items }) =
     items
         |> Array.get coords.row
         |> Maybe.andThen (Array.get coords.column)
+
+
+topLeft : Grid a -> Maybe a
+topLeft =
+    get { row = 0, column = 0 }
 
 
 set : { row : Int, column : Int } -> a -> Grid a -> Grid a
