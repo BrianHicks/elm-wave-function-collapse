@@ -11,7 +11,9 @@ import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes exposing (css, style)
 import Html.Styled.Events as Events
 import Image exposing (Image)
+import Process
 import Random
+import Task
 import Wave exposing (Wave)
 
 
@@ -21,11 +23,14 @@ type alias Model =
     , windows : List Image
     , wave : Wave
     , seed : Random.Seed
+    , running : Bool
     }
 
 
 type Msg
     = Reset { width : Int, height : Int }
+    | Start
+    | Stop
     | Step
 
 
@@ -46,6 +51,7 @@ init _ =
       , windows = windows
       , wave = Wave.init { width = 20, height = 20 } windows
       , seed = Random.initialSeed 0
+      , running = False
       }
     , Cmd.none
     )
@@ -65,8 +71,18 @@ update msg model =
                     Wave.step model.seed model.wave
             in
             ( { model | wave = newWave, seed = newSeed }
-            , Cmd.none
+            , if model.running then
+                Task.perform (\_ -> Step) (Process.sleep 100)
+
+              else
+                Cmd.none
             )
+
+        Start ->
+            update Step { model | running = True }
+
+        Stop ->
+            ( { model | running = False }, Cmd.none )
 
 
 main : Program () Model Msg
@@ -112,7 +128,14 @@ view model =
                     |> Html.section []
                 ]
             , h2 [ Html.text "Wave" ]
+            , if model.running then
+                Html.button [ Events.onClick Stop ] [ Html.text "Stop" ]
+
+              else
+                Html.button [ Events.onClick Start ] [ Html.text "Start" ]
             , Html.button [ Events.onClick Step ] [ Html.text "Step" ]
+            , Html.button [ Events.onClick (Reset { width = 10, height = 10 }) ] [ Html.text "Reset (10x10)" ]
+            , Html.button [ Events.onClick (Reset { width = 20, height = 20 }) ] [ Html.text "Reset (20x20)" ]
             , Wave.view
                 (\colors ->
                     let
