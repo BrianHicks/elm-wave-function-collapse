@@ -8,17 +8,33 @@ import Grid exposing (Grid)
 import Image exposing (Image)
 
 
-type Rule
-    = Rule
-        { from : Color
-        , to : Set Color
-        , offsetRows : Int
-        , offsetColumns : Int
-        }
+type alias Rule =
+    { from : Color
+    , to : Set Color
+    , offsetRows : Int
+    , offsetColumns : Int
+    }
 
 
 type Rules
     = Rules (Dict ( Color, Int, Int ) Rule)
+
+
+{-| Warning: this might be in the hot path and very slow. Figure it out later
+though!
+-}
+forColor : Color -> Rules -> List Rule
+forColor color (Rules rules) =
+    Dict.foldl
+        (\_ rule soFar ->
+            if rule.from == color then
+                rule :: soFar
+
+            else
+                soFar
+        )
+        []
+        rules
 
 
 emptyRules : Rules
@@ -43,20 +59,18 @@ fromImage grid =
                             (\( rowNum, column, value ) rules ->
                                 let
                                     rule =
-                                        Rule
-                                            { from = topLeft
-                                            , to = Set.singleton value
-                                            , offsetRows = rowNum
-                                            , offsetColumns = column
-                                            }
+                                        { from = topLeft
+                                        , to = Set.singleton value
+                                        , offsetRows = rowNum
+                                        , offsetColumns = column
+                                        }
 
                                     revRule =
-                                        Rule
-                                            { from = value
-                                            , to = Set.singleton topLeft
-                                            , offsetRows = -rowNum
-                                            , offsetColumns = -column
-                                            }
+                                        { from = value
+                                        , to = Set.singleton topLeft
+                                        , offsetRows = -rowNum
+                                        , offsetColumns = -column
+                                        }
                                 in
                                 rules
                                     |> Dict.update
@@ -94,28 +108,25 @@ fromImage grid =
 Everything else will be taken from the left rule.
 -}
 combineRule : Rule -> Rule -> Rule
-combineRule (Rule a) (Rule b) =
-    Rule
-        { from = a.from
-        , to = Set.union a.to b.to
-        , offsetColumns = a.offsetColumns
-        , offsetRows = a.offsetRows
-        }
+combineRule a b =
+    { from = a.from
+    , to = Set.union a.to b.to
+    , offsetColumns = a.offsetColumns
+    , offsetRows = a.offsetRows
+    }
 
 
 combine : Rules -> Rules -> Rules
 combine (Rules a) (Rules b) =
     Dict.merge
         (\leftKey leftValue result -> Dict.insert leftKey leftValue result)
-        (\key (Rule leftValue) (Rule rightValue) result ->
+        (\key leftValue rightValue result ->
             Dict.insert key
-                (Rule
-                    { from = leftValue.from
-                    , to = Set.union leftValue.to rightValue.to
-                    , offsetRows = leftValue.offsetRows
-                    , offsetColumns = leftValue.offsetColumns
-                    }
-                )
+                { from = leftValue.from
+                , to = Set.union leftValue.to rightValue.to
+                , offsetRows = leftValue.offsetRows
+                , offsetColumns = leftValue.offsetColumns
+                }
                 result
         )
         (\rightKey rightValue result -> Dict.insert rightKey rightValue result)
