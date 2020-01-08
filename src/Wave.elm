@@ -6,6 +6,7 @@ import AssocList as Dict exposing (Dict)
 import AssocSet as Set exposing (Set)
 import Cell exposing (Cell)
 import Css
+import Entropy exposing (entropy)
 import Grid exposing (Grid)
 import Heap exposing (Heap)
 import Html.Styled as Html exposing (Html)
@@ -101,31 +102,6 @@ init { width, height } windows =
         -- becomes a library.
         Err problem ->
             Debug.todo (Debug.toString problem)
-
-
-entropy : Dict a Int -> Set a -> Float
-entropy probabilities possibilities =
-    let
-        total =
-            toFloat (List.sum (Dict.values probabilities))
-    in
-    possibilities
-        |> Set.toList
-        |> List.map
-            (\item ->
-                let
-                    frequency =
-                        probabilities
-                            |> Dict.get item
-                            |> Maybe.withDefault 0
-                            |> toFloat
-
-                    probability =
-                        frequency / total
-                in
-                -probability * logBase 2 probability
-            )
-        |> List.sum
 
 
 view : (Set Image -> Html msg) -> Wave -> Html msg
