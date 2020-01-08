@@ -93,7 +93,12 @@ init { width, height } windows =
                                     )
                                     (List.range 0 (width - 1))
                             )
-                        |> Heap.fromList (Heap.smallest |> Heap.by .entropy)
+                        |> Heap.fromList
+                            (Heap.smallest
+                                |> Heap.by .entropy
+                                |> Heap.thenBy .row
+                                |> Heap.thenBy .column
+                            )
                 , rules =
                     List.foldl
                         (\window rules -> Adjacency.combine rules (Adjacency.fromImage window))
