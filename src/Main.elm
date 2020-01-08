@@ -68,7 +68,6 @@ update msg model =
             ( { model
                 | wave = Wave.init dimensions model.windows
                 , waveSize = dimensions
-                , running = False
               }
             , Cmd.none
             )
