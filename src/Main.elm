@@ -143,42 +143,42 @@ view model =
             , Html.button [ Events.onClick Step ] [ Html.text "Step" ]
             , Html.button [ Events.onClick (Reset { width = 10, height = 10 }) ] [ Html.text "Reset (10x10)" ]
             , Html.button [ Events.onClick (Reset { width = 20, height = 20 }) ] [ Html.text "Reset (20x20)" ]
-            , Html.div [ css [ Css.displayFlex, Css.justifyContent Css.spaceAround ] ]
-                [ Wave.view
-                    (\colors ->
-                        let
-                            { reds, blues, greens, opacities } =
-                                colors
-                                    |> Set.toList
-                                    |> List.filterMap Grid.topLeft
-                                    |> List.foldl
-                                        (\color soFar ->
-                                            let
-                                                rgba =
-                                                    Color.toRGBA color
-                                            in
-                                            { reds = rgba.red :: soFar.reds
-                                            , blues = rgba.blue :: soFar.blues
-                                            , greens = rgba.green :: soFar.greens
-                                            , opacities = Color.opacityToFloat rgba.alpha :: soFar.opacities
-                                            }
-                                        )
-                                        { reds = [], greens = [], blues = [], opacities = [] }
+            , Wave.view
+                (\colors ->
+                    let
+                        { reds, blues, greens, opacities } =
+                            colors
+                                |> Set.toList
+                                |> List.filterMap Grid.topLeft
+                                |> List.foldl
+                                    (\color soFar ->
+                                        let
+                                            rgba =
+                                                Color.toRGBA color
+                                        in
+                                        { reds = rgba.red :: soFar.reds
+                                        , blues = rgba.blue :: soFar.blues
+                                        , greens = rgba.green :: soFar.greens
+                                        , opacities = Color.opacityToFloat rgba.alpha :: soFar.opacities
+                                        }
+                                    )
+                                    { reds = [], greens = [], blues = [], opacities = [] }
 
-                            average items =
-                                List.sum items / toFloat (List.length items)
-                        in
-                        Image.viewColor
-                            (Color.fromRGBA
-                                { red = average reds
-                                , green = average greens
-                                , blue = average blues
-                                , alpha = Color.customOpacity (average opacities)
-                                }
-                            )
-                    )
-                    model.wave
-                , let
+                        average items =
+                            List.sum items / toFloat (List.length items)
+                    in
+                    Image.viewColor
+                        (Color.fromRGBA
+                            { red = average reds
+                            , green = average greens
+                            , blue = average blues
+                            , alpha = Color.customOpacity (average opacities)
+                            }
+                        )
+                )
+                model.wave
+            , Html.div [ css [ Css.displayFlex, Css.justifyContent Css.spaceAround ] ]
+                [ let
                     entropies =
                         Wave.getEntropies model.wave
                   in
@@ -224,6 +224,13 @@ view model =
                     [ Html.text "Rules"
                     , Wave.getRules model.wave
                         |> Adjacency.toList
+                        |> List.sortBy
+                            (\{ from, offsetRows, offsetColumns } ->
+                                ( Color.toRGBAString from
+                                , offsetRows
+                                , offsetColumns
+                                )
+                            )
                         |> List.map
                             (\{ from, to, offsetRows, offsetColumns } ->
                                 let
@@ -235,16 +242,35 @@ view model =
                                             []
                                 in
                                 Html.tr []
-                                    [ Html.td [] [ viewColor from ]
-                                    , Html.td [] [ Html.text (String.fromInt offsetRows) ]
-                                    , Html.td [] [ Html.text (String.fromInt offsetColumns) ]
+                                    [ Html.td
+                                        [ css [ Css.float Css.right ] ]
+                                        [ viewColor from ]
+                                    , Html.td
+                                        [ css [ Css.textAlign Css.right ] ]
+                                        [ Html.text (String.fromInt offsetRows) ]
+                                    , Html.td
+                                        [ css [ Css.textAlign Css.right ] ]
+                                        [ Html.text (String.fromInt offsetColumns) ]
                                     , Html.td [ css [ Css.displayFlex ] ]
                                         (Set.toList to
                                             |> List.map viewColor
                                         )
                                     ]
                             )
-                        |> Html.table []
+                        |> (::)
+                            (Html.tr []
+                                [ Html.th [] [ Html.text "From" ]
+                                , Html.th [] [ Html.text "↓" ]
+                                , Html.th [] [ Html.text "→" ]
+                                , Html.th [] [ Html.text "Allow" ]
+                                ]
+                            )
+                        |> Html.table
+                            [ css
+                                [ Css.borderSpacing (Css.px 3)
+                                , Css.borderCollapse Css.separate
+                                ]
+                            ]
                     ]
                 ]
             ]
