@@ -20,7 +20,7 @@ import Task
 type alias Model =
     { image : Image
     , windowSize : { width : Int, height : Int }
-    , windows : Grid Image
+    , windows : Grid ( ( Int, Int ), Image )
 
     -- , wave : Wave
     , waveSize : { width : Int, height : Int }
@@ -123,7 +123,7 @@ view model =
                 [ Html.summary [] [ Html.text "Windows" ]
                 , model.windows
                     |> Grid.view
-                        (\window ->
+                        (\( _, window ) ->
                             Html.div
                                 [ css
                                     [ Css.border3 (Css.px 1) Css.solid (Css.hex "000")

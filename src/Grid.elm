@@ -115,9 +115,9 @@ column colNum (Grid { items, height }) =
 
 
 {-| Get a number of windows over the given grid data. Windows wrap around the
-edges of the input grid.
+edges of the input grid. We include tuples here, as they're useful as IDs.
 -}
-windows : { width : Int, height : Int } -> Grid a -> Grid (Grid a)
+windows : { width : Int, height : Int } -> Grid a -> Grid ( ( Int, Int ), Grid a )
 windows sizes (Grid { width, height, items }) =
     let
         -- when we reach the edge, we just need to wrap around.
@@ -140,7 +140,8 @@ windows sizes (Grid { width, height, items }) =
                 (\row ->
                     Array.initialize width
                         (\col ->
-                            Grid
+                            ( ( row, col )
+                            , Grid
                                 { items =
                                     expanded
                                         |> Array.slice row (row + sizes.height)
@@ -148,6 +149,7 @@ windows sizes (Grid { width, height, items }) =
                                 , width = sizes.width
                                 , height = sizes.height
                                 }
+                            )
                         )
                 )
         , width = width
