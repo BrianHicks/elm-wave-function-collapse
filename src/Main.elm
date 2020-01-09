@@ -1,11 +1,12 @@
 module Main exposing (..)
 
 import Adjacency
-import AssocSet as Set
+import Array
 import Browser
 import Color.Transparent as Color
 import Css
 import Css.Reset as Reset
+import Dict exposing (Dict)
 import Grid exposing (Grid)
 import Heap
 import Html as RootHtml
@@ -15,18 +16,22 @@ import Html.Styled.Events as Events
 import Image exposing (Image)
 import Process
 import Random
+import Set exposing (Set)
 import Task
+import Wave exposing (Wave)
 
 
 type alias Model =
     { image : Image
     , windowSize : { width : Int, height : Int }
     , windows : Grid Image
-
-    -- , wave : Wave
+    , wave : Wave
     , waveSize : { width : Int, height : Int }
     , seed : Random.Seed
     , running : Bool
+    , indexes : Dict Int Image
+    , probabilities : Dict Int Int
+    , rules : Adjacency.Rules
     }
 
 
@@ -48,15 +53,57 @@ init _ =
 
         windows =
             Grid.windows windowSize image
+
+        withIndex =
+            Grid.withIndex windows
+
+        indexes =
+            -- wow there is a lot of conversion happening here. Probably should
+            -- come back and make it more efficient sometime.
+            withIndex
+                |> Grid.toArrays
+                |> Array.foldl Array.append Array.empty
+                |> Array.toList
+                |> Dict.fromList
+
+        probabilities =
+            -- wow there is a lot of conversion happening here. Probably should
+            -- come back and make it more efficient sometime.
+            withIndex
+                |> Grid.toArrays
+                |> Array.foldl Array.append Array.empty
+                |> Array.foldl
+                    (\( id, _ ) dict ->
+                        Dict.update id
+                            (\maybeCount ->
+                                case maybeCount of
+                                    Just count ->
+                                        Just (count + 1)
+
+                                    Nothing ->
+                                        Just 1
+                            )
+                            dict
+                    )
+                    Dict.empty
+
+        rules =
+            windows
+                |> Grid.withIndex
+                |> Grid.map Tuple.first
+                |> Adjacency.fromIds
+                |> Adjacency.finalize
     in
     ( { image = image
       , windowSize = windowSize
       , windows = windows
-
-      -- , wave = Wave.init { width = 10, height = 10 } windows
+      , wave = Wave.init rules probabilities { width = 10, height = 10 }
       , waveSize = { width = 10, height = 10 }
       , seed = Random.initialSeed 0
       , running = False
+      , indexes = indexes
+      , probabilities = probabilities
+      , rules = rules
       }
     , Cmd.none
     )
@@ -144,40 +191,42 @@ view model =
             , Html.button [ Events.onClick Step ] [ Html.text "Step" ]
             , Html.button [ Events.onClick (Reset { width = 10, height = 10 }) ] [ Html.text "Reset (10x10)" ]
             , Html.button [ Events.onClick (Reset { width = 20, height = 20 }) ] [ Html.text "Reset (20x20)" ]
+            , Wave.view
+                (\indexes ->
+                    let
+                        { reds, blues, greens, opacities } =
+                            indexes
+                                |> Set.toList
+                                |> List.filterMap (\i -> Dict.get i model.indexes)
+                                |> List.filterMap Grid.topLeft
+                                |> List.foldl
+                                    (\color soFar ->
+                                        let
+                                            rgba =
+                                                Color.toRGBA color
+                                        in
+                                        { reds = rgba.red :: soFar.reds
+                                        , blues = rgba.blue :: soFar.blues
+                                        , greens = rgba.green :: soFar.greens
+                                        , opacities = Color.opacityToFloat rgba.alpha :: soFar.opacities
+                                        }
+                                    )
+                                    { reds = [], greens = [], blues = [], opacities = [] }
 
-            --, Wave.view
-            --    (\colors ->
-            --        let
-            --            { reds, blues, greens, opacities } =
-            --                colors
-            --                    |> Set.toList
-            --                    |> List.filterMap Grid.topLeft
-            --                    |> List.foldl
-            --                        (\color soFar ->
-            --                            let
-            --                                rgba =
-            --                                    Color.toRGBA color
-            --                            in
-            --                            { reds = rgba.red :: soFar.reds
-            --                            , blues = rgba.blue :: soFar.blues
-            --                            , greens = rgba.green :: soFar.greens
-            --                            , opacities = Color.opacityToFloat rgba.alpha :: soFar.opacities
-            --                            }
-            --                        )
-            --                        { reds = [], greens = [], blues = [], opacities = [] }
-            --            average items =
-            --                List.sum items / toFloat (List.length items)
-            --        in
-            --        Image.viewColor
-            --            (Color.fromRGBA
-            --                { red = average reds
-            --                , green = average greens
-            --                , blue = average blues
-            --                , alpha = Color.customOpacity (average opacities)
-            --                }
-            --            )
-            --    )
-            --    model.wave
+                        average items =
+                            List.sum items / toFloat (List.length items)
+                    in
+                    Image.viewColor
+                        (Color.fromRGBA
+                            { red = average reds
+                            , green = average greens
+                            , blue = average blues
+                            , alpha = Color.customOpacity (average opacities)
+                            }
+                        )
+                )
+                model.wave
+
             --, Html.div [ css [ Css.displayFlex, Css.justifyContent Css.spaceAround ] ]
             --    [ let
             --        entropies =
