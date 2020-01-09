@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, initialize, rotate, set, toArrays, topLeft, update, view, windows)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, initialize, map, rotate, set, toArrays, topLeft, update, view, windows)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -220,3 +220,8 @@ indexedMap fn (Grid grid) =
         , width = grid.width
         , height = grid.height
         }
+
+
+map : (a -> b) -> Grid a -> Grid b
+map fn =
+    indexedMap (\_ a -> fn a)
