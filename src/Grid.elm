@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromDimensions, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, initialize, map, rotate, set, toArrays, topLeft, update, view, windows)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromDimensions, fromRowsAndColumns, fromRowsAndColumnsArray, get, getWrapping, indexedMap, initialize, map, rotate, set, toArrays, topLeft, update, view, windows)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -181,6 +181,17 @@ get coords (Grid { items }) =
     items
         |> Array.get coords.row
         |> Maybe.andThen (Array.get coords.column)
+
+
+{-| Still a maybe because the grid could be empty
+-}
+getWrapping : { row : Int, column : Int } -> Grid a -> Maybe a
+getWrapping coords ((Grid { width, height }) as grid) =
+    get
+        { row = modBy height coords.row
+        , column = modBy width coords.column
+        }
+        grid
 
 
 topLeft : Grid a -> Maybe a
