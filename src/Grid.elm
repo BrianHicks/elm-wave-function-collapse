@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, initialize, map, rotate, set, toArrays, topLeft, update, view, windows, withIndex)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromDimensions, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, initialize, map, rotate, set, toArrays, topLeft, update, view, windows, withIndex)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -68,6 +68,25 @@ fromRowsAndColumnsArray rowsAndColumns =
 
         a :: b :: _ ->
             Err (MoreThanOneWidth widths)
+
+
+fromDimensions : ({ row : Int, column : Int } -> a) -> { rows : Int, columns : Int } -> Grid a
+fromDimensions initter { rows, columns } =
+    Grid
+        { width = columns
+        , height = rows
+        , items =
+            Array.initialize rows
+                (\rowNum ->
+                    Array.initialize columns
+                        (\colNum ->
+                            initter
+                                { row = rowNum
+                                , column = colNum
+                                }
+                        )
+                )
+        }
 
 
 toArrays : Grid a -> Array (Array a)
