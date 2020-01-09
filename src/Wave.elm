@@ -121,7 +121,6 @@ collapse seed coords (Wave wave) =
             case Random.step generator seed of
                 ( Just final, newSeed ) ->
                     ( propagate
-                        final
                         coords
                         (Wave { wave | items = Grid.update (\_ -> Done final) coords wave.items })
                     , newSeed
@@ -144,43 +143,79 @@ collapse seed coords (Wave wave) =
             ( Wave wave, seed )
 
 
-propagate : comparable -> { row : Int, column : Int } -> Wave comparable -> Wave comparable
-propagate finalValue coords (Wave wave) =
-    case Dict.get finalValue wave.rules of
-        Just rules ->
-            rules
-                |> List.filterMap
-                    (\rule ->
-                        let
-                            target =
-                                case rule.direction of
-                                    Adjacency.Up ->
-                                        { coords | row = coords.row - 1 }
+propagate : { row : Int, column : Int } -> Wave comparable -> Wave comparable
+propagate coords wave =
+    propagateHelp [ coords ] wave
 
-                                    Adjacency.Down ->
-                                        { coords | row = coords.row + 1 }
 
-                                    Adjacency.Left ->
-                                        { coords | column = coords.column - 1 }
-
-                                    Adjacency.Right ->
-                                        { coords | column = coords.column + 1 }
-                        in
-                        propagateAndGetEntropy target rule.to wave.weights wave.items
-                    )
-                |> List.foldl
-                    (\( target, propagated, propagatedEntropy ) guts ->
-                        { guts
-                            | items = Grid.update (always (Remaining propagated)) target guts.items
-                            , entropy = Heap.push propagatedEntropy guts.entropy
-                        }
-                    )
-                    wave
-                |> Wave
-
-        Nothing ->
-            -- no such rules for this final value? Weird but OK, I guess?
+propagateHelp : List { row : Int, column : Int } -> Wave comparable -> Wave comparable
+propagateHelp coordses (Wave wave) =
+    case coordses of
+        [] ->
+            -- stack empty, we're done
             Wave wave
+
+        coords :: rest ->
+            let
+                maybeRules =
+                    Maybe.andThen
+                        (\cell ->
+                            case cell of
+                                Done id ->
+                                    Dict.get id wave.rules
+
+                                Remaining possibilities ->
+                                    -- TODO: probably should only do this in
+                                    -- one pass. This code is going to get
+                                    -- called a lot.
+                                    possibilities
+                                        |> Set.toList
+                                        |> List.filterMap (\id -> Dict.get id wave.rules)
+                                        |> List.concat
+                                        |> Adjacency.combineRules
+                                        |> Just
+                        )
+                        (Grid.get coords wave.items)
+
+                ( propagatedWave, propagatedCoordses ) =
+                    case maybeRules of
+                        Just rules ->
+                            rules
+                                |> List.filterMap
+                                    (\rule ->
+                                        let
+                                            target =
+                                                case rule.direction of
+                                                    Adjacency.Up ->
+                                                        { coords | row = coords.row - 1 }
+
+                                                    Adjacency.Down ->
+                                                        { coords | row = coords.row + 1 }
+
+                                                    Adjacency.Left ->
+                                                        { coords | column = coords.column - 1 }
+
+                                                    Adjacency.Right ->
+                                                        { coords | column = coords.column + 1 }
+                                        in
+                                        propagateAndGetEntropy target rule.to wave.weights wave.items
+                                    )
+                                |> List.foldl
+                                    (\( target, propagated, propagatedEntropy ) ( guts, toPropagate ) ->
+                                        ( { guts
+                                            | items = Grid.update (always (Remaining propagated)) target guts.items
+                                            , entropy = Heap.push propagatedEntropy guts.entropy
+                                          }
+                                        , target :: toPropagate
+                                        )
+                                    )
+                                    ( wave, rest )
+
+                        Nothing ->
+                            -- no such rules for this final value? Weird but OK, I guess?
+                            ( wave, rest )
+            in
+            propagateHelp propagatedCoordses (Wave propagatedWave)
 
 
 propagateAndGetEntropy :
@@ -190,17 +225,24 @@ propagateAndGetEntropy :
     -> Grid (Cell comparable)
     -> Maybe ( { row : Int, column : Int }, Set comparable, Entropy )
 propagateAndGetEntropy coords restriction weights grid =
+    -- TODO: I could probably make the output tiled by using
+    -- Grid.getWrapping here. Probably worth exploring later!
     case Grid.get coords grid of
         Just (Remaining current) ->
             let
                 restricted =
                     Set.intersect current restriction
             in
-            Just
-                ( coords
-                , restricted
-                , { coords = coords, entropy = entropy weights restricted }
-                )
+            if restricted == current then
+                -- no change! Don't consider this one changed
+                Nothing
+
+            else
+                Just
+                    ( coords
+                    , restricted
+                    , { coords = coords, entropy = entropy weights restricted }
+                    )
 
         Just (Done _) ->
             Nothing
