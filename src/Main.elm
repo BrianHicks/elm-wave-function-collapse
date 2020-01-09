@@ -114,8 +114,8 @@ update msg model =
     case msg of
         Reset dimensions ->
             ( { model
-                | -- wave = Wave.init dimensions model.windows
-                  waveSize = dimensions
+                | wave = Wave.init model.rules model.probabilities dimensions
+                , waveSize = dimensions
               }
             , Cmd.none
             )
