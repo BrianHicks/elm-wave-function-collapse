@@ -14,6 +14,7 @@ import Html.Styled as Html exposing (Html)
 import Html.Styled.Attributes exposing (css, style)
 import Html.Styled.Events as Events
 import Image exposing (Image)
+import Murmur3
 import Process
 import Random
 import Set exposing (Set)
@@ -30,7 +31,7 @@ type alias Model =
     , seed : Random.Seed
     , running : Bool
     , indexes : Dict Int Image
-    , probabilities : Dict Int Int
+    , weights : Dict Int Int
     , rules : Adjacency.Rules Int
     }
 
@@ -55,7 +56,22 @@ init _ =
             Grid.windows windowSize image
 
         withIndex =
-            Grid.withIndex windows
+            Grid.map
+                (\window ->
+                    ( window
+                        |> Grid.toArrays
+                        |> Array.foldr
+                            (\row rowString ->
+                                Array.foldr (\value string -> Color.toRGBAString value ++ string)
+                                    rowString
+                                    row
+                            )
+                            ""
+                        |> Murmur3.hashString 0
+                    , window
+                    )
+                )
+                windows
 
         indexes =
             -- wow there is a lot of conversion happening here. Probably should
@@ -66,7 +82,7 @@ init _ =
                 |> Array.toList
                 |> Dict.fromList
 
-        probabilities =
+        weights =
             -- wow there is a lot of conversion happening here. Probably should
             -- come back and make it more efficient sometime.
             withIndex
@@ -88,8 +104,7 @@ init _ =
                     Dict.empty
 
         rules =
-            windows
-                |> Grid.withIndex
+            withIndex
                 |> Grid.map Tuple.first
                 |> Adjacency.fromIds
                 |> Adjacency.finalize
@@ -97,12 +112,12 @@ init _ =
     ( { image = image
       , windowSize = windowSize
       , windows = windows
-      , wave = Wave.init rules probabilities { width = 10, height = 10 }
+      , wave = Wave.init rules weights { width = 10, height = 10 }
       , waveSize = { width = 10, height = 10 }
       , seed = Random.initialSeed 0
       , running = False
       , indexes = indexes
-      , probabilities = probabilities
+      , weights = weights
       , rules = rules
       }
     , Cmd.none
@@ -114,7 +129,7 @@ update msg model =
     case msg of
         Reset dimensions ->
             ( { model
-                | wave = Wave.init model.rules model.probabilities dimensions
+                | wave = Wave.init model.rules model.weights dimensions
                 , waveSize = dimensions
               }
             , Cmd.none

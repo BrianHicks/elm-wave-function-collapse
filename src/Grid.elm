@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromDimensions, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, initialize, map, rotate, set, toArrays, topLeft, update, view, windows, withIndex)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromDimensions, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, initialize, map, rotate, set, toArrays, topLeft, update, view, windows)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -171,26 +171,6 @@ windows sizes (Grid { width, height, items }) =
                                 }
                         )
                 )
-        , width = width
-        , height = height
-        }
-
-
-withIndex : Grid a -> Grid ( Int, a )
-withIndex (Grid { width, height, items }) =
-    Grid
-        { items =
-            Array.indexedMap
-                (\rowNum row ->
-                    Array.indexedMap
-                        (\colNum item ->
-                            ( colNum * width + rowNum
-                            , item
-                            )
-                        )
-                        row
-                )
-                items
         , width = width
         , height = height
         }

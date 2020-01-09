@@ -79,10 +79,6 @@ init rules weights dimensions =
 
 step : Random.Seed -> Wave comparable -> ( Wave comparable, Random.Seed )
 step seed (Wave wave) =
-    let
-        _ =
-            Debug.log "entropy is" wave.entropy
-    in
     case Heap.pop wave.entropy of
         Just ( { coords }, poppedEntropy ) ->
             collapse seed coords (Wave { wave | entropy = poppedEntropy })
