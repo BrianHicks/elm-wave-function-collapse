@@ -15,12 +15,17 @@ type alias Entropy =
     }
 
 
+type Cell
+    = Done Int
+    | Remaining (Set Int)
+
+
 type Wave
     = Wave
         { weights : Dict Int Int
         , rules : Adjacency.Rules
         , entropy : Heap Entropy
-        , items : Grid (Set Int)
+        , items : Grid Cell
         }
 
 
@@ -52,7 +57,7 @@ init rules weights dimensions =
                         |> Heap.thenBy (.coords >> .column)
                     )
         , items =
-            Grid.fromDimensions (always (Set.fromList (Dict.keys weights)))
+            Grid.fromDimensions (always (Remaining (Set.fromList (Dict.keys weights))))
                 { rows = dimensions.height
                 , columns = dimensions.width
                 }
@@ -61,9 +66,13 @@ init rules weights dimensions =
 
 step : Random.Seed -> Wave -> ( Wave, Random.Seed )
 step seed (Wave wave) =
+    let
+        _ =
+            Debug.log "entropy is" wave.entropy
+    in
     case Heap.pop wave.entropy of
-        Just ( { coords }, newEntropy ) ->
-            collapse seed coords (Wave { wave | entropy = newEntropy })
+        Just ( { coords }, poppedEntropy ) ->
+            collapse seed coords (Wave { wave | entropy = poppedEntropy })
 
         Nothing ->
             -- quittin' time!
@@ -75,7 +84,7 @@ step seed (Wave wave) =
 collapse : Random.Seed -> { row : Int, column : Int } -> Wave -> ( Wave, Random.Seed )
 collapse seed coords (Wave wave) =
     case Grid.get coords wave.items of
-        Just remaining ->
+        Just (Remaining remaining) ->
             let
                 generator =
                     wave.weights
@@ -105,7 +114,7 @@ collapse seed coords (Wave wave) =
                     ( propagate
                         final
                         coords
-                        (Wave { wave | items = Grid.update (\_ -> Set.singleton final) coords wave.items })
+                        (Wave { wave | items = Grid.update (\_ -> Done final) coords wave.items })
                     , newSeed
                     )
 
@@ -115,6 +124,11 @@ collapse seed coords (Wave wave) =
                     -- from moving forward, and should just bail (and maybe be
                     -- louder here in the future?)
                     ( Wave wave, seed )
+
+        Just (Done _) ->
+            -- we requested something that was already done, possibly because
+            -- it was on the heap twice. No-op!
+            ( Wave wave, seed )
 
         Nothing ->
             -- we requested something outside the grid for some reason? No-op.
@@ -148,7 +162,7 @@ propagate finalValue coords (Wave wave) =
                 |> List.foldl
                     (\( target, propagated, propagatedEntropy ) guts ->
                         { guts
-                            | items = Grid.update (always propagated) target guts.items
+                            | items = Grid.update (always (Remaining propagated)) target guts.items
                             , entropy = Heap.push propagatedEntropy guts.entropy
                         }
                     )
@@ -164,11 +178,11 @@ propagateAndGetEntropy :
     { row : Int, column : Int }
     -> Set Int
     -> Dict Int Int
-    -> Grid (Set Int)
+    -> Grid Cell
     -> Maybe ( { row : Int, column : Int }, Set Int, Entropy )
 propagateAndGetEntropy coords restriction weights grid =
     case Grid.get coords grid of
-        Just current ->
+        Just (Remaining current) ->
             let
                 restricted =
                     Set.intersect current restriction
@@ -178,6 +192,9 @@ propagateAndGetEntropy coords restriction weights grid =
                 , restricted
                 , { coords = coords, entropy = entropy weights restricted }
                 )
+
+        Just (Done _) ->
+            Nothing
 
         Nothing ->
             Nothing
@@ -198,4 +215,13 @@ entropy probabilities possibilities =
 
 view : (Set Int -> Html msg) -> Wave -> Html msg
 view fn (Wave { items }) =
-    Grid.view fn items
+    Grid.view
+        (\cell ->
+            case cell of
+                Done a ->
+                    fn (Set.singleton a)
+
+                Remaining remaining ->
+                    fn remaining
+        )
+        items
