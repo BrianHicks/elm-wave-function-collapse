@@ -43,6 +43,27 @@ initialize { rows, columns } init =
         }
 
 
+{-| TODO remove this or initialize
+-}
+fromDimensions : ({ row : Int, column : Int } -> a) -> { rows : Int, columns : Int } -> Grid a
+fromDimensions initter { rows, columns } =
+    Grid
+        { width = columns
+        , height = rows
+        , items =
+            Array.initialize rows
+                (\rowNum ->
+                    Array.initialize columns
+                        (\colNum ->
+                            initter
+                                { row = rowNum
+                                , column = colNum
+                                }
+                        )
+                )
+        }
+
+
 fromRowsAndColumnsArray : Array (Array a) -> Result FromRowsAndColumnsProblem (Grid a)
 fromRowsAndColumnsArray rowsAndColumns =
     let
@@ -68,25 +89,6 @@ fromRowsAndColumnsArray rowsAndColumns =
 
         a :: b :: _ ->
             Err (MoreThanOneWidth widths)
-
-
-fromDimensions : ({ row : Int, column : Int } -> a) -> { rows : Int, columns : Int } -> Grid a
-fromDimensions initter { rows, columns } =
-    Grid
-        { width = columns
-        , height = rows
-        , items =
-            Array.initialize rows
-                (\rowNum ->
-                    Array.initialize columns
-                        (\colNum ->
-                            initter
-                                { row = rowNum
-                                , column = colNum
-                                }
-                        )
-                )
-        }
 
 
 toArrays : Grid a -> Array (Array a)
