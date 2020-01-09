@@ -136,8 +136,8 @@ collapse seed coords (Wave wave) =
 
         Just (Done _) ->
             -- we requested something that was already done, possibly because
-            -- it was on the heap twice. No-op!
-            ( Wave wave, seed )
+            -- it was on the heap twice. Ignore it and pop the next item.
+            step seed (Wave wave)
 
         Nothing ->
             -- we requested something outside the grid for some reason? No-op.
