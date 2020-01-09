@@ -121,17 +121,17 @@ update msg model =
             )
 
         Step ->
-            -- let
-            --     ( newWave, newSeed ) =
-            --         Wave.step model.seed model.wave
-            -- in
-            -- ( { model | wave = newWave, seed = newSeed }
-            -- , if model.running then
-            --     Task.perform (\_ -> Step) (Process.sleep 0)
-            --   else
-            --     Cmd.none
-            -- )
-            ( model, Cmd.none )
+            let
+                ( newWave, newSeed ) =
+                    Wave.step model.seed model.wave
+            in
+            ( { model | wave = newWave, seed = newSeed }
+            , if model.running then
+                Task.perform (\_ -> Step) (Process.sleep 0)
+
+              else
+                Cmd.none
+            )
 
         Start ->
             update Step { model | running = True }
