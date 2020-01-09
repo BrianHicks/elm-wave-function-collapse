@@ -226,102 +226,122 @@ view model =
                         )
                 )
                 model.wave
+            , Html.div [ css [ Css.displayFlex, Css.justifyContent Css.spaceAround ] ]
+                [ let
+                    entropies =
+                        Wave.getEntropy model.wave
+                  in
+                  Html.div []
+                    [ Html.text "Entropy Info"
+                    , Html.p []
+                        [ Html.text "Next: "
+                        , case Heap.peek entropies of
+                            Nothing ->
+                                Html.text "Nothing"
 
-            --, Html.div [ css [ Css.displayFlex, Css.justifyContent Css.spaceAround ] ]
-            --    [ let
-            --        entropies =
-            --            Wave.getEntropies model.wave
-            --      in
-            --      Html.div []
-            --        [ Html.text "Entropy Info"
-            --        , Html.p []
-            --            [ Html.text "Next: "
-            --            , case Heap.peek entropies of
-            --                Nothing ->
-            --                    Html.text "Nothing"
-            --                Just { row, column, entropy } ->
-            --                    Html.span []
-            --                        [ Html.text (String.fromFloat entropy)
-            --                        , Html.text " @ "
-            --                        , Html.text (String.fromInt row)
-            --                        , Html.text ","
-            --                        , Html.text (String.fromInt column)
-            --                        ]
-            --            ]
-            --        , Html.p []
-            --            [ Html.text "Total: "
-            --            , Html.text (String.fromInt (Heap.size entropies))
-            --            ]
-            --        , entropies
-            --            |> Heap.toList
-            --            |> List.foldl
-            --                (\item -> Grid.update (Heap.push item) { row = item.row, column = item.column })
-            --                (Grid.initialize { rows = model.waveSize.height, columns = model.waveSize.width }
-            --                    (\_ -> Heap.empty (Heap.smallest |> Heap.by .entropy))
-            --                )
-            --            |> Grid.view
-            --                (\heap ->
-            --                    Html.td [ css [ Css.padding (Css.px 2) ] ]
-            --                        [ Heap.peek heap
-            --                            |> Maybe.map (.entropy >> String.fromFloat >> String.left 4)
-            --                            |> Maybe.withDefault "0"
-            --                            |> Html.text
-            --                        ]
-            --                )
-            --        ]
-            --    , Html.div []
-            --        [ Html.text "Rules"
-            --        , Wave.getRules model.wave
-            --            |> Adjacency.toList
-            --            |> List.sortBy
-            --                (\{ from, offsetRows, offsetColumns } ->
-            --                    ( Color.toRGBAString from
-            --                    , offsetRows
-            --                    , offsetColumns
-            --                    )
-            --                )
-            --            |> List.map
-            --                (\{ from, to, offsetRows, offsetColumns } ->
-            --                    let
-            --                        viewColor color =
-            --                            Html.div
-            --                                [ style "background-color" (Color.toRGBAString color)
-            --                                , css [ Css.width (Css.px 10), Css.height (Css.px 10) ]
-            --                                ]
-            --                                []
-            --                    in
-            --                    Html.tr []
-            --                        [ Html.td
-            --                            [ css [ Css.float Css.right ] ]
-            --                            [ viewColor from ]
-            --                        , Html.td
-            --                            [ css [ Css.textAlign Css.right ] ]
-            --                            [ Html.text (String.fromInt offsetRows) ]
-            --                        , Html.td
-            --                            [ css [ Css.textAlign Css.right ] ]
-            --                            [ Html.text (String.fromInt offsetColumns) ]
-            --                        , Html.td [ css [ Css.displayFlex ] ]
-            --                            (Set.toList to
-            --                                |> List.map viewColor
-            --                            )
-            --                        ]
-            --                )
-            --            |> (::)
-            --                (Html.tr []
-            --                    [ Html.th [] [ Html.text "From" ]
-            --                    , Html.th [] [ Html.text "↓" ]
-            --                    , Html.th [] [ Html.text "→" ]
-            --                    , Html.th [] [ Html.text "Allow" ]
-            --                    ]
-            --                )
-            --            |> Html.table
-            --                [ css
-            --                    [ Css.borderSpacing (Css.px 3)
-            --                    , Css.borderCollapse Css.separate
-            --                    ]
-            --                ]
-            --        ]
-            --    ]
+                            Just { coords, entropy } ->
+                                Html.span []
+                                    [ Html.text (String.fromInt entropy)
+                                    , Html.text " @ "
+                                    , Html.text (String.fromInt coords.row)
+                                    , Html.text ","
+                                    , Html.text (String.fromInt coords.column)
+                                    ]
+                        ]
+                    , Html.p []
+                        [ Html.text "Total: "
+                        , Html.text (String.fromInt (Heap.size entropies))
+                        ]
+                    , entropies
+                        |> Heap.toList
+                        |> List.foldl
+                            (\new grid ->
+                                Grid.update
+                                    (\maybeExisting ->
+                                        case maybeExisting of
+                                            Nothing ->
+                                                Just new
+
+                                            Just existing ->
+                                                if existing.entropy < new.entropy then
+                                                    Just existing
+
+                                                else
+                                                    Just new
+                                    )
+                                    { row = new.coords.row, column = new.coords.column }
+                                    grid
+                            )
+                            (Grid.initialize
+                                { rows = model.waveSize.height
+                                , columns = model.waveSize.width
+                                }
+                                (always Nothing)
+                            )
+                        |> Grid.view
+                            (\value ->
+                                Html.td [ css [ Css.padding (Css.px 2) ] ]
+                                    [ value
+                                        |> Maybe.map (String.fromInt << .entropy)
+                                        |> Maybe.withDefault "-"
+                                        |> Html.text
+                                    ]
+                            )
+                    ]
+
+                --    , Html.div []
+                --        [ Html.text "Rules"
+                --        , Wave.getRules model.wave
+                --            |> Adjacency.toList
+                --            |> List.sortBy
+                --                (\{ from, offsetRows, offsetColumns } ->
+                --                    ( Color.toRGBAString from
+                --                    , offsetRows
+                --                    , offsetColumns
+                --                    )
+                --                )
+                --            |> List.map
+                --                (\{ from, to, offsetRows, offsetColumns } ->
+                --                    let
+                --                        viewColor color =
+                --                            Html.div
+                --                                [ style "background-color" (Color.toRGBAString color)
+                --                                , css [ Css.width (Css.px 10), Css.height (Css.px 10) ]
+                --                                ]
+                --                                []
+                --                    in
+                --                    Html.tr []
+                --                        [ Html.td
+                --                            [ css [ Css.float Css.right ] ]
+                --                            [ viewColor from ]
+                --                        , Html.td
+                --                            [ css [ Css.textAlign Css.right ] ]
+                --                            [ Html.text (String.fromInt offsetRows) ]
+                --                        , Html.td
+                --                            [ css [ Css.textAlign Css.right ] ]
+                --                            [ Html.text (String.fromInt offsetColumns) ]
+                --                        , Html.td [ css [ Css.displayFlex ] ]
+                --                            (Set.toList to
+                --                                |> List.map viewColor
+                --                            )
+                --                        ]
+                --                )
+                --            |> (::)
+                --                (Html.tr []
+                --                    [ Html.th [] [ Html.text "From" ]
+                --                    , Html.th [] [ Html.text "↓" ]
+                --                    , Html.th [] [ Html.text "→" ]
+                --                    , Html.th [] [ Html.text "Allow" ]
+                --                    ]
+                --                )
+                --            |> Html.table
+                --                [ css
+                --                    [ Css.borderSpacing (Css.px 3)
+                --                    , Css.borderCollapse Css.separate
+                --                    ]
+                --                ]
+                --        ]
+                ]
             ]
 
 

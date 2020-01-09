@@ -1,4 +1,4 @@
-module Wave exposing (Wave, init, step, view)
+module Wave exposing (Wave, getEntropy, init, step, view)
 
 import Adjacency
 import Dict exposing (Dict)
@@ -27,6 +27,19 @@ type Wave
         , entropy : Heap Entropy
         , items : Grid Cell
         }
+
+
+
+-- DEBUG INFO
+
+
+getEntropy : Wave -> Heap Entropy
+getEntropy (Wave guts) =
+    guts.entropy
+
+
+
+-- END DEBUG
 
 
 init : Adjacency.Rules -> Dict Int Int -> { width : Int, height : Int } -> Wave
