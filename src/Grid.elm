@@ -114,17 +114,12 @@ column colNum (Grid { items, height }) =
             (Just Array.empty)
 
 
-{-| Get a number of windows over the given grid data.
+{-| Get a number of windows over the given grid data. Windows wrap around the
+edges of the input grid.
 -}
-windows : { width : Int, height : Int } -> Grid a -> List (Grid a)
+windows : { width : Int, height : Int } -> Grid a -> Grid (Grid a)
 windows sizes (Grid { width, height, items }) =
     let
-        columns =
-            List.range 0 (width - 1)
-
-        rows =
-            List.range 0 (height - 1)
-
         -- when we reach the edge, we just need to wrap around.
         -- Repeating once per axis should do it!
         expanded =
@@ -139,23 +134,25 @@ windows sizes (Grid { width, height, items }) =
                     Array.append row row
                 )
     in
-    -- get coordinates
-    List.concatMap
-        (\row ->
-            List.map
-                (\col ->
-                    Grid
-                        { items =
-                            expanded
-                                |> Array.slice row (row + sizes.height)
-                                |> Array.map (Array.slice col (col + sizes.width))
-                        , width = sizes.width
-                        , height = sizes.height
-                        }
+    Grid
+        { items =
+            Array.initialize height
+                (\row ->
+                    Array.initialize width
+                        (\col ->
+                            Grid
+                                { items =
+                                    expanded
+                                        |> Array.slice row (row + sizes.height)
+                                        |> Array.map (Array.slice col (col + sizes.width))
+                                , width = sizes.width
+                                , height = sizes.height
+                                }
+                        )
                 )
-                columns
-        )
-        rows
+        , width = width
+        , height = height
+        }
 
 
 get : { row : Int, column : Int } -> Grid a -> Maybe a

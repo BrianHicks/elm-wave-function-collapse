@@ -5,7 +5,7 @@ import Browser
 import Color.Transparent as Color
 import Css
 import Css.Reset as Reset
-import Grid
+import Grid exposing (Grid)
 import Heap
 import Html as RootHtml
 import Html.Styled as Html exposing (Html)
@@ -20,7 +20,7 @@ import Task
 type alias Model =
     { image : Image
     , windowSize : { width : Int, height : Int }
-    , windows : List Image
+    , windows : Grid Image
 
     -- , wave : Wave
     , waveSize : { width : Int, height : Int }
@@ -122,9 +122,8 @@ view model =
             , Html.details []
                 [ Html.summary [] [ Html.text "Windows" ]
                 , model.windows
-                    |> List.map Image.view
-                    |> List.map
-                        (\image ->
+                    |> Grid.view
+                        (\window ->
                             Html.div
                                 [ css
                                     [ Css.border3 (Css.px 1) Css.solid (Css.hex "000")
@@ -132,9 +131,8 @@ view model =
                                     , Css.margin (Css.px 5)
                                     ]
                                 ]
-                                [ image ]
+                                [ Image.view window ]
                         )
-                    |> Html.section []
                 ]
             , h2 [ Html.text "Wave" ]
             , if model.running then
