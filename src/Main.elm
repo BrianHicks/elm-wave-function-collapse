@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Adjacency
 import AssocSet as Set
 import Browser
 import Color.Transparent as Color
@@ -20,7 +21,7 @@ import Task
 type alias Model =
     { image : Image
     , windowSize : { width : Int, height : Int }
-    , windows : Grid ( ( Int, Int ), Image )
+    , windows : Grid Image
 
     -- , wave : Wave
     , waveSize : { width : Int, height : Int }
@@ -123,7 +124,7 @@ view model =
                 [ Html.summary [] [ Html.text "Windows" ]
                 , model.windows
                     |> Grid.view
-                        (\( _, window ) ->
+                        (\window ->
                             Html.div
                                 [ css
                                     [ Css.border3 (Css.px 1) Css.solid (Css.hex "000")

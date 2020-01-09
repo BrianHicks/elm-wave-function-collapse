@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, initialize, map, rotate, set, toArrays, topLeft, update, view, windows)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, indexedMap, initialize, map, rotate, set, toArrays, topLeft, update, view, windows, withIndex)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -117,7 +117,7 @@ column colNum (Grid { items, height }) =
 {-| Get a number of windows over the given grid data. Windows wrap around the
 edges of the input grid. We include tuples here, as they're useful as IDs.
 -}
-windows : { width : Int, height : Int } -> Grid a -> Grid ( ( Int, Int ), Grid a )
+windows : { width : Int, height : Int } -> Grid a -> Grid (Grid a)
 windows sizes (Grid { width, height, items }) =
     let
         -- when we reach the edge, we just need to wrap around.
@@ -140,8 +140,7 @@ windows sizes (Grid { width, height, items }) =
                 (\row ->
                     Array.initialize width
                         (\col ->
-                            ( ( row, col )
-                            , Grid
+                            Grid
                                 { items =
                                     expanded
                                         |> Array.slice row (row + sizes.height)
@@ -149,9 +148,28 @@ windows sizes (Grid { width, height, items }) =
                                 , width = sizes.width
                                 , height = sizes.height
                                 }
-                            )
                         )
                 )
+        , width = width
+        , height = height
+        }
+
+
+withIndex : Grid a -> Grid ( Int, a )
+withIndex (Grid { width, height, items }) =
+    Grid
+        { items =
+            Array.indexedMap
+                (\rowNum row ->
+                    Array.indexedMap
+                        (\colNum item ->
+                            ( colNum * width + rowNum
+                            , item
+                            )
+                        )
+                        row
+                )
+                items
         , width = width
         , height = height
         }
