@@ -1,4 +1,4 @@
-module Adjacency exposing (Direction(..), DraftRules, Rule, Rules, finalize, fromIds)
+module Adjacency exposing (Direction(..), DraftRules, Rule, Rules, combineRules, finalize, fromIds)
 
 import Array
 import Dict exposing (Dict)
@@ -79,6 +79,25 @@ finalize (DraftRules draft) =
         )
         Dict.empty
         draft
+
+
+combineRules : List (Rule comparable) -> List (Rule comparable)
+combineRules original =
+    original
+        |> List.foldl
+            (\rule ->
+                Dict.update (directionToComparable rule.direction)
+                    (\maybeRule ->
+                        case maybeRule of
+                            Just existing ->
+                                Just { existing | to = Set.union existing.to rule.to }
+
+                            Nothing ->
+                                Just rule
+                    )
+            )
+            Dict.empty
+        |> Dict.values
 
 
 
