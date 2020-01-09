@@ -155,16 +155,16 @@ propagate finalValue coords (Wave wave) =
                             target =
                                 case rule.direction of
                                     Adjacency.Up ->
-                                        { coords | column = coords.row - 1 }
+                                        { coords | row = coords.row - 1 }
 
                                     Adjacency.Down ->
-                                        { coords | column = coords.row + 1 }
+                                        { coords | row = coords.row + 1 }
 
                                     Adjacency.Left ->
-                                        { coords | row = coords.column - 1 }
+                                        { coords | column = coords.column - 1 }
 
                                     Adjacency.Right ->
-                                        { coords | row = coords.column + 1 }
+                                        { coords | column = coords.column + 1 }
                         in
                         propagateAndGetEntropy target rule.to wave.weights wave.items
                     )
