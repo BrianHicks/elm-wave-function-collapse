@@ -9,11 +9,17 @@ import Random exposing (Seed)
 import Set exposing (Set)
 
 
+type alias Entropy =
+    { coords : { row : Int, column : Int }
+    , entropy : Int
+    }
+
+
 type Wave
     = Wave
         { weights : Dict Int Int
         , rules : Adjacency.Rules
-        , entropy : Heap { coords : { row : Int, column : Int }, entropy : Int }
+        , entropy : Heap Entropy
         , items : Grid (Set Int)
         }
 
@@ -96,7 +102,10 @@ collapse seed coords (Wave wave) =
             in
             case Random.step generator seed of
                 ( Just final, newSeed ) ->
-                    ( Wave { wave | items = Grid.update (\_ -> Set.singleton final) coords wave.items }
+                    ( propagate
+                        final
+                        coords
+                        (Wave { wave | items = Grid.update (\_ -> Set.singleton final) coords wave.items })
                     , newSeed
                     )
 
@@ -110,6 +119,68 @@ collapse seed coords (Wave wave) =
         Nothing ->
             -- we requested something outside the grid for some reason? No-op.
             ( Wave wave, seed )
+
+
+propagate : Int -> { row : Int, column : Int } -> Wave -> Wave
+propagate finalValue coords (Wave wave) =
+    case Dict.get finalValue wave.rules of
+        Just rules ->
+            rules
+                |> List.filterMap
+                    (\rule ->
+                        let
+                            target =
+                                case rule.direction of
+                                    Adjacency.Up ->
+                                        { coords | column = coords.column - 1 }
+
+                                    Adjacency.Down ->
+                                        { coords | column = coords.column + 1 }
+
+                                    Adjacency.Left ->
+                                        { coords | row = coords.row - 1 }
+
+                                    Adjacency.Right ->
+                                        { coords | row = coords.row + 1 }
+                        in
+                        propagateAndGetEntropy target rule.to wave.weights wave.items
+                    )
+                |> List.foldl
+                    (\( target, propagated, propagatedEntropy ) guts ->
+                        { guts
+                            | items = Grid.update (always propagated) target guts.items
+                            , entropy = Heap.push propagatedEntropy guts.entropy
+                        }
+                    )
+                    wave
+                |> Wave
+
+        Nothing ->
+            -- no such rules for this final value? Weird but OK, I guess?
+            Wave wave
+
+
+propagateAndGetEntropy :
+    { row : Int, column : Int }
+    -> Set Int
+    -> Dict Int Int
+    -> Grid (Set Int)
+    -> Maybe ( { row : Int, column : Int }, Set Int, Entropy )
+propagateAndGetEntropy coords restriction weights grid =
+    case Grid.get coords grid of
+        Just current ->
+            let
+                restricted =
+                    Set.intersect current restriction
+            in
+            Just
+                ( coords
+                , restricted
+                , { coords = coords, entropy = entropy weights restricted }
+                )
+
+        Nothing ->
+            Nothing
 
 
 entropy : Dict comparable Int -> Set comparable -> Int
