@@ -45,17 +45,17 @@ directionFromComparable c =
             Right
 
 
-type alias Rule =
+type alias Rule comparable =
     { direction : Direction
-    , to : Set Int
+    , to : Set comparable
     }
 
 
-type alias Rules =
-    Dict Int (List Rule)
+type alias Rules comparable =
+    Dict comparable (List (Rule comparable))
 
 
-finalize : DraftRules -> Rules
+finalize : DraftRules comparable -> Rules comparable
 finalize (DraftRules draft) =
     Dict.foldl
         (\( id, direction ) values dict ->
@@ -85,11 +85,11 @@ finalize (DraftRules draft) =
 -- Draft Rules (they should be combinable, eventually!)
 
 
-type DraftRules
-    = DraftRules (Dict ( Int, Int ) (Set Int))
+type DraftRules comparable
+    = DraftRules (Dict ( comparable, Int ) (Set comparable))
 
 
-fromIds : Grid Int -> DraftRules
+fromIds : Grid comparable -> DraftRules comparable
 fromIds grid =
     let
         rows =

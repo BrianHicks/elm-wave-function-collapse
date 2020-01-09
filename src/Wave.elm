@@ -15,17 +15,17 @@ type alias Entropy =
     }
 
 
-type Cell
-    = Done Int
-    | Remaining (Set Int)
+type Cell comparable
+    = Done comparable
+    | Remaining (Set comparable)
 
 
-type Wave
+type Wave comparable
     = Wave
-        { weights : Dict Int Int
-        , rules : Adjacency.Rules
+        { weights : Dict comparable Int
+        , rules : Adjacency.Rules comparable
         , entropy : Heap Entropy
-        , items : Grid Cell
+        , items : Grid (Cell comparable)
         }
 
 
@@ -33,7 +33,7 @@ type Wave
 -- DEBUG INFO
 
 
-getEntropy : Wave -> Heap Entropy
+getEntropy : Wave comparable -> Heap Entropy
 getEntropy (Wave guts) =
     guts.entropy
 
@@ -42,7 +42,7 @@ getEntropy (Wave guts) =
 -- END DEBUG
 
 
-init : Adjacency.Rules -> Dict Int Int -> { width : Int, height : Int } -> Wave
+init : Adjacency.Rules comparable -> Dict comparable Int -> { width : Int, height : Int } -> Wave comparable
 init rules weights dimensions =
     let
         initialEntropy =
@@ -77,7 +77,7 @@ init rules weights dimensions =
         }
 
 
-step : Random.Seed -> Wave -> ( Wave, Random.Seed )
+step : Random.Seed -> Wave comparable -> ( Wave comparable, Random.Seed )
 step seed (Wave wave) =
     let
         _ =
@@ -94,7 +94,7 @@ step seed (Wave wave) =
 
 {-| Step one!
 -}
-collapse : Random.Seed -> { row : Int, column : Int } -> Wave -> ( Wave, Random.Seed )
+collapse : Random.Seed -> { row : Int, column : Int } -> Wave comparable -> ( Wave comparable, Random.Seed )
 collapse seed coords (Wave wave) =
     case Grid.get coords wave.items of
         Just (Remaining remaining) ->
@@ -148,7 +148,7 @@ collapse seed coords (Wave wave) =
             ( Wave wave, seed )
 
 
-propagate : Int -> { row : Int, column : Int } -> Wave -> Wave
+propagate : comparable -> { row : Int, column : Int } -> Wave comparable -> Wave comparable
 propagate finalValue coords (Wave wave) =
     case Dict.get finalValue wave.rules of
         Just rules ->
@@ -189,10 +189,10 @@ propagate finalValue coords (Wave wave) =
 
 propagateAndGetEntropy :
     { row : Int, column : Int }
-    -> Set Int
-    -> Dict Int Int
-    -> Grid Cell
-    -> Maybe ( { row : Int, column : Int }, Set Int, Entropy )
+    -> Set comparable
+    -> Dict comparable Int
+    -> Grid (Cell comparable)
+    -> Maybe ( { row : Int, column : Int }, Set comparable, Entropy )
 propagateAndGetEntropy coords restriction weights grid =
     case Grid.get coords grid of
         Just (Remaining current) ->
@@ -226,7 +226,7 @@ entropy probabilities possibilities =
         |> List.sum
 
 
-view : (Set Int -> Html msg) -> Wave -> Html msg
+view : (Set comparable -> Html msg) -> Wave comparable -> Html msg
 view fn (Wave { items }) =
     Grid.view
         (\cell ->

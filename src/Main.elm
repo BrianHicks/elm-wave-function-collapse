@@ -25,13 +25,13 @@ type alias Model =
     { image : Image
     , windowSize : { width : Int, height : Int }
     , windows : Grid Image
-    , wave : Wave
+    , wave : Wave Int
     , waveSize : { width : Int, height : Int }
     , seed : Random.Seed
     , running : Bool
     , indexes : Dict Int Image
     , probabilities : Dict Int Int
-    , rules : Adjacency.Rules
+    , rules : Adjacency.Rules Int
     }
 
 
