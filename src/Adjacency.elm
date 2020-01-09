@@ -1,4 +1,4 @@
-module Adjacency exposing (..)
+module Adjacency exposing (Direction(..), DraftRules, Rule, Rules, finalize, fromIds)
 
 import Array
 import Dict exposing (Dict)
@@ -29,11 +29,60 @@ directionToComparable d =
             3
 
 
+directionFromComparable : Int -> Direction
+directionFromComparable c =
+    case c of
+        0 ->
+            Up
+
+        1 ->
+            Down
+
+        2 ->
+            Left
+
+        _ ->
+            Right
+
+
 type alias Rule =
-    { from : Int
-    , direction : Direction
+    { direction : Direction
     , to : Set Int
     }
+
+
+type alias Rules =
+    Dict Int (List Rule)
+
+
+finalize : DraftRules -> Rules
+finalize (DraftRules draft) =
+    Dict.foldl
+        (\( id, direction ) values dict ->
+            let
+                rule =
+                    { direction = directionFromComparable direction
+                    , to = values
+                    }
+            in
+            Dict.update id
+                (\maybeRules ->
+                    Just <|
+                        case maybeRules of
+                            Just rules ->
+                                rule :: rules
+
+                            Nothing ->
+                                [ rule ]
+                )
+                dict
+        )
+        Dict.empty
+        draft
+
+
+
+-- Draft Rules (they should be combinable, eventually!)
 
 
 type DraftRules
