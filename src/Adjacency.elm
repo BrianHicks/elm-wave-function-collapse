@@ -101,13 +101,13 @@ fromIds grid =
                 Array.indexedMap
                     (\colNum id ->
                         List.filterMap identity
-                            [ Grid.get { row = rowNum, column = colNum - 1 } grid
+                            [ Grid.getWrapping { row = rowNum, column = colNum - 1 } grid
                                 |> Maybe.map (\dest -> ( id, directionToComparable Left, dest ))
-                            , Grid.get { row = rowNum, column = colNum + 1 } grid
+                            , Grid.getWrapping { row = rowNum, column = colNum + 1 } grid
                                 |> Maybe.map (\dest -> ( id, directionToComparable Right, dest ))
-                            , Grid.get { row = rowNum - 1, column = colNum } grid
+                            , Grid.getWrapping { row = rowNum - 1, column = colNum } grid
                                 |> Maybe.map (\dest -> ( id, directionToComparable Up, dest ))
-                            , Grid.get { row = rowNum + 1, column = colNum } grid
+                            , Grid.getWrapping { row = rowNum + 1, column = colNum } grid
                                 |> Maybe.map (\dest -> ( id, directionToComparable Down, dest ))
                             ]
                     )
