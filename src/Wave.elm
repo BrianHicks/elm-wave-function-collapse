@@ -2,6 +2,7 @@ module Wave exposing (Wave, getEntropy, init, step, view)
 
 import Adjacency
 import Dict exposing (Dict)
+import Direction
 import Grid exposing (Grid)
 import Heap exposing (Heap)
 import Html.Styled as Html exposing (Html)
@@ -183,22 +184,11 @@ propagateHelp coordses (Wave wave) =
                             rules
                                 |> List.filterMap
                                     (\rule ->
-                                        let
-                                            target =
-                                                case rule.direction of
-                                                    Adjacency.Up ->
-                                                        { coords | row = coords.row - 1 }
-
-                                                    Adjacency.Down ->
-                                                        { coords | row = coords.row + 1 }
-
-                                                    Adjacency.Left ->
-                                                        { coords | column = coords.column - 1 }
-
-                                                    Adjacency.Right ->
-                                                        { coords | column = coords.column + 1 }
-                                        in
-                                        propagateAndGetEntropy target rule.to wave.weights wave.items
+                                        propagateAndGetEntropy
+                                            (Direction.move coords rule.direction)
+                                            rule.to
+                                            wave.weights
+                                            wave.items
                                     )
                                 |> List.foldl
                                     (\( target, propagated, propagatedEntropy ) ( guts, toPropagate ) ->

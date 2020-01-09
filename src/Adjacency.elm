@@ -1,48 +1,10 @@
-module Adjacency exposing (Direction(..), DraftRules, Rule, Rules, combineRules, finalize, fromIds)
+module Adjacency exposing (DraftRules, Rule, Rules, combineRules, finalize, fromIds)
 
 import Array
 import Dict exposing (Dict)
+import Direction exposing (Direction)
 import Grid exposing (Grid)
 import Set exposing (Set)
-
-
-type Direction
-    = Up
-    | Down
-    | Left
-    | Right
-
-
-directionToComparable : Direction -> Int
-directionToComparable d =
-    case d of
-        Up ->
-            0
-
-        Down ->
-            1
-
-        Left ->
-            2
-
-        Right ->
-            3
-
-
-directionFromComparable : Int -> Direction
-directionFromComparable c =
-    case c of
-        0 ->
-            Up
-
-        1 ->
-            Down
-
-        2 ->
-            Left
-
-        _ ->
-            Right
 
 
 type alias Rule comparable =
@@ -61,7 +23,7 @@ finalize (DraftRules draft) =
         (\( id, direction ) values dict ->
             let
                 rule =
-                    { direction = directionFromComparable direction
+                    { direction = direction
                     , to = values
                     }
             in
@@ -86,7 +48,7 @@ combineRules original =
     original
         |> List.foldl
             (\rule ->
-                Dict.update (directionToComparable rule.direction)
+                Dict.update rule.direction
                     (\maybeRule ->
                         case maybeRule of
                             Just existing ->
@@ -105,7 +67,7 @@ combineRules original =
 
 
 type DraftRules comparable
-    = DraftRules (Dict ( comparable, Int ) (Set comparable))
+    = DraftRules (Dict ( comparable, Direction ) (Set comparable))
 
 
 fromIds : Grid comparable -> DraftRules comparable
@@ -121,13 +83,13 @@ fromIds grid =
                     (\colNum id ->
                         List.filterMap identity
                             [ Grid.getWrapping { row = rowNum, column = colNum - 1 } grid
-                                |> Maybe.map (\dest -> ( id, directionToComparable Left, dest ))
+                                |> Maybe.map (\dest -> ( id, Direction.left, dest ))
                             , Grid.getWrapping { row = rowNum, column = colNum + 1 } grid
-                                |> Maybe.map (\dest -> ( id, directionToComparable Right, dest ))
+                                |> Maybe.map (\dest -> ( id, Direction.right, dest ))
                             , Grid.getWrapping { row = rowNum - 1, column = colNum } grid
-                                |> Maybe.map (\dest -> ( id, directionToComparable Up, dest ))
+                                |> Maybe.map (\dest -> ( id, Direction.up, dest ))
                             , Grid.getWrapping { row = rowNum + 1, column = colNum } grid
-                                |> Maybe.map (\dest -> ( id, directionToComparable Down, dest ))
+                                |> Maybe.map (\dest -> ( id, Direction.down, dest ))
                             ]
                     )
                     row
