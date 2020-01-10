@@ -1,4 +1,4 @@
-module Direction exposing (Direction, down, left, move, right, up)
+module Direction exposing (Direction, down, left, move, opposite, right, up)
 
 
 type alias Direction =
@@ -23,6 +23,11 @@ left =
 right : Direction
 right =
     ( 0, 1 )
+
+
+opposite : Direction -> Direction
+opposite ( row, column ) =
+    ( -row, -column )
 
 
 move : { row : Int, column : Int } -> Direction -> { row : Int, column : Int }
