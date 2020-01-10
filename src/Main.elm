@@ -181,7 +181,7 @@ view model =
             , Reset.borderBoxV201408
             , h1 [ Html.text "Wave Function Collapse" ]
             , h2 [ Html.text "Source Image" ]
-            , Image.view model.image
+            , Image.view [] model.image
             , Html.details []
                 [ Html.summary [] [ Html.text "Windows" ]
                 , model.windows
@@ -194,7 +194,7 @@ view model =
                                     , Css.margin (Css.px 5)
                                     ]
                                 ]
-                                [ Image.view window ]
+                                [ Image.view [] window ]
                         )
                 ]
             , h2 [ Html.text "Wave" ]
@@ -204,6 +204,8 @@ view model =
               else
                 Html.button [ Events.onClick Start ] [ Html.text "Start" ]
             , Html.button [ Events.onClick Step ] [ Html.text "Step" ]
+            , Html.button [ Events.onClick (Reset { width = 2, height = 2 }) ] [ Html.text "Reset (2x2)" ]
+            , Html.button [ Events.onClick (Reset { width = 5, height = 5 }) ] [ Html.text "Reset (5x5)" ]
             , Html.button [ Events.onClick (Reset { width = 10, height = 10 }) ] [ Html.text "Reset (10x10)" ]
             , Html.button [ Events.onClick (Reset { width = 20, height = 20 }) ] [ Html.text "Reset (20x20)" ]
             , Wave.view
@@ -231,7 +233,7 @@ view model =
                         average items =
                             List.sum items / toFloat (List.length items)
                     in
-                    Image.viewColor
+                    Image.viewColor []
                         (Color.fromRGBA
                             { red = average reds
                             , green = average greens

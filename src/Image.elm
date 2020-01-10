@@ -4,7 +4,7 @@ import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
 import Css
 import Grid exposing (Grid)
-import Html.Styled as Html exposing (Html)
+import Html.Styled as Html exposing (Attribute, Html)
 import Html.Styled.Attributes as Attrs exposing (css, style)
 import Set
 
@@ -13,19 +13,21 @@ type alias Image =
     Grid Color
 
 
-viewColor : Color -> Html msg
-viewColor color =
+viewColor : List (Attribute msg) -> Color -> Html msg
+viewColor attrs color =
     Html.td
-        [ style "background-color" (Color.toRGBAString color)
-        , Attrs.width 10
-        , Attrs.height 10
-        ]
+        ([ style "background-color" (Color.toRGBAString color)
+         , Attrs.width 10
+         , Attrs.height 10
+         ]
+            ++ attrs
+        )
         []
 
 
-view : Image -> Html msg
-view =
-    Grid.view viewColor
+view : List (Attribute msg) -> Image -> Html msg
+view attrs image =
+    Grid.view (viewColor attrs) image
 
 
 recurse : Image
