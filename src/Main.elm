@@ -196,7 +196,11 @@ view model =
             , Reset.borderBoxV201408
             , h1 [ Html.text "Wave Function Collapse" ]
             , h2 [ Html.text "Source Image" ]
-            , [ ( "Waves", Image.waves ), ( "Bars", Image.bars ), ( "Recurse", Image.recurse ) ]
+            , [ ( "Waves", Image.waves )
+              , ( "Bars", Image.bars )
+              , ( "Recurse", Image.recurse )
+              , ( "Nyan Cat", Image.nyan )
+              ]
                 |> List.map
                     (\( name, image ) ->
                         [ { width = 1, height = 1 }

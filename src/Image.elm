@@ -1,4 +1,4 @@
-module Image exposing (Image, bars, recurse, view, viewColor, waves)
+module Image exposing (Image, bars, nyan, recurse, view, viewColor, waves)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -122,6 +122,56 @@ waves =
             , [ l, l, l, d, d, d, d, d ]
             , [ d, d, d, l, l, d, d, d ]
             , [ d, d, d, d, d, l, l, d ]
+            ]
+    of
+        Ok grid ->
+            grid
+
+        Err problem ->
+            Debug.todo (Debug.toString problem)
+
+
+nyan : Image
+nyan =
+    let
+        -- Transparent
+        t =
+            Color.fromRGBA { red = 255, green = 255, blue = 255, alpha = Color.transparent }
+
+        -- White
+        w =
+            Color.fromRGBA { red = 255, green = 255, blue = 255, alpha = Color.opaque }
+
+        -- Pink
+        p =
+            Color.fromRGBA { red = 255, green = 128, blue = 128, alpha = Color.opaque }
+
+        -- Grey
+        g =
+            Color.fromRGBA { red = 128, green = 128, blue = 128, alpha = Color.opaque }
+
+        -- Key (black)
+        k =
+            Color.fromRGBA { red = 43, green = 45, blue = 45, alpha = Color.opaque }
+    in
+    case
+        Grid.fromRowsAndColumns
+            [ List.repeat 18 t
+            , [ t, t, k, k, t, t, t, t, t, t, t, t, t, k, k, t, t, t ]
+            , [ t, t, k, g, k, t, t, t, t, t, t, t, k, g, g, k, t, t ]
+            , [ t, t, k, g, g, k, t, t, t, t, t, k, g, g, g, k, t, t ]
+            , [ t, t, k, g, g, g, k, k, k, k, k, g, g, g, g, k, t, t ]
+            , [ t, k, g, g, g, g, g, g, g, g, g, g, g, g, g, k, t, t ]
+            , [ t, k, g, g, g, g, g, g, g, g, g, g, g, g, g, k, t, t ]
+            , [ t, k, g, g, g, g, g, g, g, g, g, g, g, g, g, g, k, t ]
+            , [ t, k, g, g, g, w, k, g, g, g, g, g, w, k, g, g, k, t ]
+            , [ t, k, g, g, g, k, k, g, g, g, k, g, k, k, g, g, k, t ]
+            , [ t, k, g, p, p, g, g, g, g, g, g, g, g, g, p, p, k, t ]
+            , [ t, k, g, p, p, g, k, g, g, k, g, g, k, g, p, p, k, t ]
+            , [ t, t, k, g, g, g, k, k, k, k, k, k, k, g, g, k, t, t ]
+            , [ t, t, t, k, g, g, g, g, g, g, g, g, g, g, k, t, t, t ]
+            , [ t, t, t, t, k, k, k, k, k, k, k, k, k, k, t, t, t, t ]
+            , List.repeat 18 t
             ]
     of
         Ok grid ->
