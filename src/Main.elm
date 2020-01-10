@@ -233,14 +233,18 @@ view model =
                         average items =
                             List.sum items / toFloat (List.length items)
                     in
-                    Image.viewColor [ Attributes.attribute "data-count" (String.fromInt (Set.size indexes)) ]
-                        (Color.fromRGBA
-                            { red = average reds
-                            , green = average greens
-                            , blue = average blues
-                            , alpha = Color.customOpacity (average opacities)
-                            }
-                        )
+                    if Set.isEmpty indexes then
+                        Html.td [] [ Html.text "X" ]
+
+                    else
+                        Image.viewColor [ Attributes.attribute "data-count" (String.fromInt (Set.size indexes)) ]
+                            (Color.fromRGBA
+                                { red = average reds
+                                , green = average greens
+                                , blue = average blues
+                                , alpha = Color.customOpacity (average opacities)
+                                }
+                            )
                 )
                 model.wave
 
