@@ -17,21 +17,8 @@ type alias Entropy =
 
 
 type Cell comparable
-    = Open (Dict ( Direction, comparable ) Int)
+    = Open (Set comparable)
     | Collapsed comparable
-
-
-enabledForCell : Cell comparable -> Set comparable
-enabledForCell cell =
-    case cell of
-        Open enablers ->
-            enablers
-                |> Dict.keys
-                |> List.map Tuple.second
-                |> Set.fromList
-
-        Collapsed _ ->
-            Set.empty
 
 
 type Wave comparable
@@ -60,31 +47,7 @@ init : Adjacency.Rules comparable -> Dict comparable Int -> { width : Int, heigh
 init rules weights dimensions =
     let
         initialCell =
-            Dict.foldl
-                (\_ rules_ outFromRules ->
-                    List.foldl
-                        (\{ direction, to } outFromRule ->
-                            List.foldl
-                                (\value ->
-                                    Dict.update ( direction, value )
-                                        (\maybeCount ->
-                                            case maybeCount of
-                                                Nothing ->
-                                                    Just 1
-
-                                                Just count ->
-                                                    Just (count + 1)
-                                        )
-                                )
-                                outFromRule
-                                (Set.toList to)
-                        )
-                        outFromRules
-                        rules_
-                )
-                Dict.empty
-                rules
-                |> Open
+            Open (Set.fromList (Dict.keys weights))
 
         initialEntropy =
             entropy weights (Set.fromList (Dict.keys weights))
@@ -134,11 +97,8 @@ step seed (Wave wave) =
 collapse : Random.Seed -> { row : Int, column : Int } -> Wave comparable -> ( Wave comparable, Random.Seed )
 collapse seed coords (Wave wave) =
     case Grid.get coords wave.items of
-        Just ((Open _) as enablers) ->
+        Just (Open remaining) ->
             let
-                remaining =
-                    enabledForCell enablers
-
                 generator =
                     wave.weights
                         |> Dict.toList
@@ -165,10 +125,7 @@ collapse seed coords (Wave wave) =
             case Random.step generator seed of
                 ( Just final, newSeed ) ->
                     ( propagate
-                        (Set.remove final remaining
-                            |> Set.toList
-                            |> List.map (\toRemove -> ( coords, toRemove ))
-                        )
+                        [ coords ]
                         (Wave { wave | items = Grid.update (\_ -> Collapsed final) coords wave.items })
                     , newSeed
                     )
@@ -192,90 +149,81 @@ collapse seed coords (Wave wave) =
 
 
 propagate :
-    List ( { row : Int, column : Int }, comparable )
+    List { row : Int, column : Int }
     -> Wave comparable
     -> Wave comparable
-propagate removals (Wave wave) =
-    case removals of
+propagate todo (Wave wave) =
+    case todo of
         [] ->
             -- stack empty, we're done
             Wave wave
 
-        ( coords, toRemove ) :: rest ->
-            case Dict.get toRemove wave.rules of
-                -- count down enablers in that direction.
-                -- if enablers becomes zero, recur and remove the instance
-                Just rules ->
-                    rules
-                        |> List.concatMap
-                            (\{ direction, to } -> Set.toList to |> List.map (\id -> ( direction, id )))
-                        |> List.foldl
-                            (\( direction, id ) ( innerWave, innerRest {- TODO: better names -} ) ->
-                                -- TODO: could use wrapping get here to make
-                                -- rules wrap around edges. Explore later!
-                                let
-                                    target =
-                                        Direction.move coords direction
-                                in
-                                case Grid.get target wave.items of
-                                    Just (Collapsed _) ->
-                                        -- we don't need to eliminated already-collapsed cells.
-                                        -- I don't know if this is correct, though... what if
-                                        -- there is a conflict? We wouldn't know about it by
-                                        -- ignoring this case. If output seems weird, it may
-                                        -- be worth looking here.
-                                        ( innerWave, innerRest )
-
-                                    Nothing ->
-                                        ( innerWave, innerRest )
-
-                                    Just (Open enablers) ->
-                                        let
-                                            key =
-                                                ( direction, id )
-
-                                            newEnablers =
-                                                Dict.update key
-                                                    (Maybe.andThen
-                                                        (\count ->
-                                                            if count == 1 then
-                                                                Nothing
-
-                                                            else
-                                                                Just (count - 1)
-                                                        )
-                                                    )
-                                                    enablers
-
-                                            newCell =
-                                                Open newEnablers
-                                        in
-                                        ( { innerWave
-                                            | entropy =
-                                                if enablers /= newEnablers then
-                                                    Heap.push
-                                                        { coords = target
-                                                        , entropy = entropy innerWave.weights (enabledForCell newCell)
-                                                        }
-                                                        innerWave.entropy
-
-                                                else
-                                                    innerWave.entropy
-                                            , items = Grid.set target newCell innerWave.items
-                                          }
-                                        , if enablers /= newEnablers && Dict.get key newEnablers == Nothing then
-                                            ( target, id ) :: innerRest
-
-                                          else
-                                            innerRest
-                                        )
-                            )
-                            ( wave, rest )
-                        |> (\( newWave, newRest ) -> propagate newRest (Wave newWave))
-
+        target :: rest ->
+            case Grid.get target wave.items of
                 Nothing ->
-                    -- no rules for this case, which is unusual but probably fine
+                    -- requested cell was out of bounds. Ignore and move on.
                     propagate rest (Wave wave)
+
+                Just cell ->
+                    [ Direction.up, Direction.down, Direction.left, Direction.right ]
+                        |> List.foldl (propagateInDirection target cell) ( Wave wave, rest )
+                        |> (\( finalWave, finalRest ) -> propagate finalRest finalWave)
+
+
+propagateInDirection :
+    { row : Int, column : Int }
+    -> Cell comparable
+    -> Direction
+    -> ( Wave comparable, List { row : Int, column : Int } )
+    -> ( Wave comparable, List { row : Int, column : Int } )
+propagateInDirection source cell direction ( Wave wave, todo ) =
+    let
+        target =
+            Direction.move source direction
+    in
+    case Grid.get target wave.items of
+        Nothing ->
+            -- out of bounds, skip
+            ( Wave wave, todo )
+
+        Just (Collapsed _) ->
+            -- we don't need to consider collapsed cells
+            ( Wave wave, todo )
+
+        Just (Open remaining) ->
+            let
+                possibleInDirection =
+                    case cell of
+                        Collapsed value ->
+                            Dict.get ( value, direction ) wave.rules
+                                |> Maybe.withDefault Set.empty
+
+                        Open remaining_ ->
+                            remaining_
+                                |> Set.toList
+                                |> List.filterMap (\value -> Dict.get ( value, direction ) wave.rules)
+                                |> List.foldl Set.intersect Set.empty
+
+                reduced =
+                    Set.intersect remaining possibleInDirection
+            in
+            if reduced == remaining {- i.e. it didn't change -} then
+                ( Wave wave, todo )
+
+            else
+                ( Wave
+                    { wave
+                        | items = Grid.set target (Open reduced) wave.items
+                        , entropy =
+                            Heap.push
+                                { coords = target
+                                , entropy = entropy wave.weights reduced
+                                }
+                                wave.entropy
+                    }
+                , -- TODO: add this as a target for propagation if it's not already in this list -
+                  todo
+                )
 
 
 entropy : Dict comparable Int -> Set comparable -> Int
@@ -299,7 +247,7 @@ view fn (Wave { items }) =
                 Collapsed a ->
                     fn (Set.singleton a)
 
-                Open enablers ->
-                    fn (enabledForCell cell)
+                Open remaining ->
+                    fn remaining
         )
         items
