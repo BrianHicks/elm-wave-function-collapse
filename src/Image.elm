@@ -6,6 +6,7 @@ import Css
 import Grid exposing (Grid)
 import Html.Styled as Html exposing (Attribute, Html)
 import Html.Styled.Attributes as Attrs exposing (css, style)
+import Palette.Tango as Tango
 import Set
 
 
@@ -81,13 +82,10 @@ bars : Image
 bars =
     let
         b =
-            Color.fromRGBA { red = 0, green = 0, blue = 255, alpha = Color.opaque }
-
-        w =
-            Color.fromRGBA { red = 200, green = 200, blue = 200, alpha = Color.opaque }
+            Color.fromColor Color.opaque Tango.skyBlue1
 
         k =
-            Color.fromRGBA { red = 0, green = 0, blue = 0, alpha = Color.opaque }
+            Color.fromRGBA { red = 45, green = 45, blue = 45, alpha = Color.opaque }
     in
     case
         Grid.fromRowsAndColumns
