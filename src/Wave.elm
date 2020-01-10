@@ -153,7 +153,7 @@ propagate :
     -> Wave comparable
     -> Wave comparable
 propagate todo (Wave wave) =
-    case todo of
+    case Debug.log "todo" todo of
         [] ->
             -- stack empty, we're done
             Wave wave
@@ -223,7 +223,11 @@ propagateInDirection source cell direction ( Wave wave, todo ) =
                                 wave.entropy
                     }
                 , -- TODO: add this as a target for propagation if it's not already in this list -
-                  if not (List.member target todo) then
+                  if Set.isEmpty reduced then
+                    -- we're blocked and should stop immediately
+                    []
+
+                  else if not (List.member target todo) then
                     target :: todo
 
                   else
