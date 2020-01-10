@@ -1,5 +1,9 @@
 module Adjacency exposing (DraftRules, Rule, Rules, combineRules, finalize, fromIds)
 
+{-| The draft/final rules distinction is no longer necessary and should really
+be cleaned up.
+-}
+
 import Array
 import Dict exposing (Dict)
 import Direction exposing (Direction)
@@ -14,33 +18,12 @@ type alias Rule comparable =
 
 
 type alias Rules comparable =
-    Dict comparable (List (Rule comparable))
+    Dict ( comparable, Direction ) (Set comparable)
 
 
 finalize : DraftRules comparable -> Rules comparable
 finalize (DraftRules draft) =
-    Dict.foldl
-        (\( id, direction ) values dict ->
-            let
-                rule =
-                    { direction = direction
-                    , to = values
-                    }
-            in
-            Dict.update id
-                (\maybeRules ->
-                    Just <|
-                        case maybeRules of
-                            Just rules ->
-                                rule :: rules
-
-                            Nothing ->
-                                [ rule ]
-                )
-                dict
-        )
-        Dict.empty
-        draft
+    draft
 
 
 combineRules : List (Rule comparable) -> List (Rule comparable)
