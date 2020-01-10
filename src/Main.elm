@@ -235,7 +235,16 @@ view model =
                             List.sum items / toFloat (List.length items)
                     in
                     if Set.isEmpty indexes then
-                        Html.td [] [ Html.text "X" ]
+                        Html.td
+                            [ css
+                                [ Css.lineHeight (Css.px 10)
+                                , Css.fontSize (Css.px 10)
+                                , Css.textAlign Css.center
+                                ]
+                            , Attributes.width 10
+                            , Attributes.height 10
+                            ]
+                            [ Html.text "×" ]
 
                     else
                         Image.viewColor [ Attributes.attribute "data-count" (String.fromInt (Set.size indexes)) ]
