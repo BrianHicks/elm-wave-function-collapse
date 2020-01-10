@@ -1,4 +1,4 @@
-module Wave exposing (Wave, getEntropy, init, step, view)
+module Wave exposing (Cell(..), Wave, getEntropy, init, step, view)
 
 import Adjacency
 import Dict exposing (Dict)
@@ -248,15 +248,6 @@ entropy probabilities possibilities =
         |> List.sum
 
 
-view : (Set comparable -> Html msg) -> Wave comparable -> Html msg
-view fn (Wave { items }) =
-    Grid.view
-        (\cell ->
-            case cell of
-                Collapsed a ->
-                    fn (Set.singleton a)
-
-                Open remaining ->
-                    fn remaining
-        )
-        items
+view : (Cell comparable -> Html msg) -> Wave comparable -> Html msg
+view viewCell (Wave { items }) =
+    Grid.view viewCell items

@@ -34,6 +34,7 @@ type alias Model =
     , weights : Dict Int Int
     , rules : Adjacency.Rules Int
     , showEntropy : Bool
+    , dimUnknown : Bool
     }
 
 
@@ -43,17 +44,20 @@ type Msg
     | Stop
     | Step
     | ToggleEntropy
+    | ToggleDimUnknown
+    | Load Image { width : Int, height : Int }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
+    ( load Image.waves { width = 3, height = 3 }
+    , Cmd.none
+    )
+
+
+load : Image -> { width : Int, height : Int } -> Model
+load image windowSize =
     let
-        image =
-            Image.bars
-
-        windowSize =
-            { width = 3, height = 3 }
-
         windows =
             Grid.windows windowSize image
 
@@ -111,20 +115,19 @@ init _ =
                 |> Adjacency.fromIds
                 |> Adjacency.finalize
     in
-    ( { image = image
-      , windowSize = windowSize
-      , windows = windows
-      , wave = Wave.init rules weights { width = 10, height = 10 }
-      , waveSize = { width = 10, height = 10 }
-      , seed = Random.initialSeed 0
-      , running = False
-      , indexes = indexes
-      , weights = weights
-      , rules = rules
-      , showEntropy = False
-      }
-    , Cmd.none
-    )
+    { image = image
+    , windowSize = windowSize
+    , windows = windows
+    , wave = Wave.init rules weights { width = 10, height = 10 }
+    , waveSize = { width = 10, height = 10 }
+    , seed = Random.initialSeed 0
+    , running = False
+    , indexes = indexes
+    , weights = weights
+    , rules = rules
+    , showEntropy = False
+    , dimUnknown = False
+    }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -160,6 +163,12 @@ update msg model =
         ToggleEntropy ->
             ( { model | showEntropy = not model.showEntropy }, Cmd.none )
 
+        ToggleDimUnknown ->
+            ( { model | dimUnknown = not model.dimUnknown }, Cmd.none )
+
+        Load image dimensions ->
+            ( load image dimensions, Cmd.none )
+
 
 main : Program () Model Msg
 main =
@@ -187,6 +196,20 @@ view model =
             , Reset.borderBoxV201408
             , h1 [ Html.text "Wave Function Collapse" ]
             , h2 [ Html.text "Source Image" ]
+            , [ ( "Waves", Image.waves ), ( "Bars", Image.bars ), ( "Recurse", Image.recurse ) ]
+                |> List.map
+                    (\( name, image ) ->
+                        [ { width = 1, height = 1 }
+                        , { width = 2, height = 2 }
+                        , { width = 3, height = 3 }
+                        ]
+                            |> List.map
+                                (\dimensions ->
+                                    Html.button [ Events.onClick (Load image dimensions) ] [ Html.text (name ++ "(" ++ String.fromInt dimensions.height ++ "x" ++ String.fromInt dimensions.width ++ ")") ]
+                                )
+                            |> Html.p []
+                    )
+                |> Html.div []
             , Image.view [] model.image
             , Html.details []
                 [ Html.summary [] [ Html.text "Windows" ]
@@ -204,64 +227,90 @@ view model =
                         )
                 ]
             , h2 [ Html.text "Wave" ]
-            , if model.running then
-                Html.button [ Events.onClick Stop ] [ Html.text "Stop" ]
+            , Html.p []
+                [ if model.running then
+                    Html.button [ Events.onClick Stop ] [ Html.text "Stop" ]
 
-              else
-                Html.button [ Events.onClick Start ] [ Html.text "Start" ]
-            , Html.button [ Events.onClick Step ] [ Html.text "Step" ]
-            , Html.button [ Events.onClick (Reset { width = 2, height = 2 }) ] [ Html.text "Reset (2x2)" ]
-            , Html.button [ Events.onClick (Reset { width = 5, height = 5 }) ] [ Html.text "Reset (5x5)" ]
-            , Html.button [ Events.onClick (Reset { width = 10, height = 10 }) ] [ Html.text "Reset (10x10)" ]
-            , Html.button [ Events.onClick (Reset { width = 20, height = 20 }) ] [ Html.text "Reset (20x20)" ]
-            , Html.button [ Events.onClick (Reset { width = 50, height = 50 }) ] [ Html.text "Reset (50x50)" ]
-            , Html.button [ Events.onClick ToggleEntropy ] [ Html.text "Toggle Entropy (debug)" ]
+                  else
+                    Html.button [ Events.onClick Start ] [ Html.text "Start" ]
+                , Html.button [ Events.onClick Step ] [ Html.text "Step" ]
+                ]
+            , Html.p []
+                [ Html.button [ Events.onClick (Reset { width = 2, height = 2 }) ] [ Html.text "Reset (2x2)" ]
+                , Html.button [ Events.onClick (Reset { width = 5, height = 5 }) ] [ Html.text "Reset (5x5)" ]
+                , Html.button [ Events.onClick (Reset { width = 10, height = 10 }) ] [ Html.text "Reset (10x10)" ]
+                , Html.button [ Events.onClick (Reset { width = 20, height = 20 }) ] [ Html.text "Reset (20x20)" ]
+                , Html.button [ Events.onClick (Reset { width = 50, height = 50 }) ] [ Html.text "Reset (50x50)" ]
+                ]
+            , Html.p []
+                [ Html.button [ Events.onClick ToggleEntropy ] [ Html.text "Toggle Entropy (debug)" ]
+                , Html.button [ Events.onClick ToggleDimUnknown ] [ Html.text "Toggle Dimming Uknown Cells (debug)" ]
+                ]
             , Wave.view
-                (\indexes ->
-                    let
-                        { reds, blues, greens, opacities } =
-                            indexes
-                                |> Set.toList
-                                |> List.filterMap (\i -> Dict.get i model.indexes)
-                                |> List.filterMap Grid.topLeft
-                                |> List.foldl
-                                    (\color soFar ->
-                                        let
-                                            rgba =
-                                                Color.toRGBA color
-                                        in
-                                        { reds = rgba.red :: soFar.reds
-                                        , blues = rgba.blue :: soFar.blues
-                                        , greens = rgba.green :: soFar.greens
-                                        , opacities = Color.opacityToFloat rgba.alpha :: soFar.opacities
+                (\cell ->
+                    case cell of
+                        Wave.Collapsed tile ->
+                            case Dict.get tile model.indexes |> Maybe.andThen Grid.topLeft of
+                                Just color ->
+                                    Image.viewColor [] color
+
+                                Nothing ->
+                                    Html.text "invalid index"
+
+                        Wave.Open indexes ->
+                            let
+                                { reds, blues, greens, opacities } =
+                                    indexes
+                                        |> Set.toList
+                                        |> List.filterMap (\i -> Dict.get i model.indexes)
+                                        |> List.filterMap Grid.topLeft
+                                        |> List.foldl
+                                            (\color soFar ->
+                                                let
+                                                    rgba =
+                                                        Color.toRGBA color
+                                                in
+                                                { reds = rgba.red :: soFar.reds
+                                                , blues = rgba.blue :: soFar.blues
+                                                , greens = rgba.green :: soFar.greens
+                                                , opacities = Color.opacityToFloat rgba.alpha :: soFar.opacities
+                                                }
+                                            )
+                                            { reds = [], greens = [], blues = [], opacities = [] }
+
+                                average items =
+                                    List.sum items / toFloat (List.length items)
+                            in
+                            if Set.isEmpty indexes then
+                                Html.td
+                                    [ css
+                                        [ Css.lineHeight (Css.px 10)
+                                        , Css.fontSize (Css.px 10)
+                                        , Css.textAlign Css.center
+                                        ]
+                                    , Attributes.width 10
+                                    , Attributes.height 10
+                                    ]
+                                    [ Html.text "×" ]
+
+                            else
+                                Image.viewColor
+                                    [ Attributes.attribute "data-count" (String.fromInt (Set.size indexes))
+                                    , style "opacity"
+                                        (if model.dimUnknown then
+                                            "0.5"
+
+                                         else
+                                            "1"
+                                        )
+                                    ]
+                                    (Color.fromRGBA
+                                        { red = average reds
+                                        , green = average greens
+                                        , blue = average blues
+                                        , alpha = Color.customOpacity (average opacities)
                                         }
                                     )
-                                    { reds = [], greens = [], blues = [], opacities = [] }
-
-                        average items =
-                            List.sum items / toFloat (List.length items)
-                    in
-                    if Set.isEmpty indexes then
-                        Html.td
-                            [ css
-                                [ Css.lineHeight (Css.px 10)
-                                , Css.fontSize (Css.px 10)
-                                , Css.textAlign Css.center
-                                ]
-                            , Attributes.width 10
-                            , Attributes.height 10
-                            ]
-                            [ Html.text "×" ]
-
-                    else
-                        Image.viewColor [ Attributes.attribute "data-count" (String.fromInt (Set.size indexes)) ]
-                            (Color.fromRGBA
-                                { red = average reds
-                                , green = average greens
-                                , blue = average blues
-                                , alpha = Color.customOpacity (average opacities)
-                                }
-                            )
                 )
                 model.wave
             , if model.showEntropy then

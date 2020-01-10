@@ -1,4 +1,4 @@
-module Image exposing (Image, bars, recurse, view, viewColor)
+module Image exposing (Image, bars, recurse, view, viewColor, waves)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -94,6 +94,34 @@ bars =
             , [ k, b, k, k, k ]
             , [ k, b, k, k, k ]
             , [ k, b, k, k, k ]
+            ]
+    of
+        Ok grid ->
+            grid
+
+        Err problem ->
+            Debug.todo (Debug.toString problem)
+
+
+waves : Image
+waves =
+    let
+        l =
+            Color.fromColor Color.opaque Tango.skyBlue1
+
+        d =
+            Color.fromColor Color.opaque Tango.skyBlue3
+    in
+    case
+        Grid.fromRowsAndColumns
+            [ [ d, d, d, d, d, d, d, l ]
+            , [ l, d, d, d, d, d, d, d ]
+            , [ d, l, l, l, d, d, d, d ]
+            , [ d, d, d, d, l, l, d, d ]
+            , [ d, d, d, d, d, d, l, l ]
+            , [ l, l, l, d, d, d, d, d ]
+            , [ d, d, d, l, l, d, d, d ]
+            , [ d, d, d, d, d, l, l, d ]
             ]
     of
         Ok grid ->
