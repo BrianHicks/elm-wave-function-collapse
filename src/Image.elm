@@ -89,11 +89,11 @@ bars =
     in
     case
         Grid.fromRowsAndColumns
-            [ [ k, b, k, k ]
-            , [ b, b, b, b ]
-            , [ k, b, k, k ]
-            , [ k, b, k, k ]
-            , [ k, b, k, k ]
+            [ [ k, b, k, k, k ]
+            , [ b, b, b, b, b ]
+            , [ k, b, k, k, k ]
+            , [ k, b, k, k, k ]
+            , [ k, b, k, k, k ]
             ]
     of
         Ok grid ->
