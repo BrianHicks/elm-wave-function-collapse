@@ -47,7 +47,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         image =
-            Image.recurse
+            Image.bars
 
         windowSize =
             { width = 3, height = 3 }
@@ -208,6 +208,7 @@ view model =
             , Html.button [ Events.onClick (Reset { width = 5, height = 5 }) ] [ Html.text "Reset (5x5)" ]
             , Html.button [ Events.onClick (Reset { width = 10, height = 10 }) ] [ Html.text "Reset (10x10)" ]
             , Html.button [ Events.onClick (Reset { width = 20, height = 20 }) ] [ Html.text "Reset (20x20)" ]
+            , Html.button [ Events.onClick (Reset { width = 50, height = 50 }) ] [ Html.text "Reset (50x50)" ]
             , Wave.view
                 (\indexes ->
                     let
