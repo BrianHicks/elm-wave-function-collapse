@@ -167,6 +167,7 @@ propagate todo (Wave wave) =
                 Just cell ->
                     [ Direction.up, Direction.down, Direction.left, Direction.right ]
                         |> List.foldl (propagateInDirection target cell) ( Wave wave, rest )
+                        -- TODO this prevents TCO. Should rearrange the code once it works.
                         |> (\( finalWave, finalRest ) -> propagate finalRest finalWave)
 
 
