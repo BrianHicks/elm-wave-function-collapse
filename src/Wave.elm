@@ -222,7 +222,11 @@ propagateInDirection source cell direction ( Wave wave, todo ) =
                                 wave.entropy
                     }
                 , -- TODO: add this as a target for propagation if it's not already in this list -
-                  todo
+                  if not (List.member target todo) then
+                    target :: todo
+
+                  else
+                    todo
                 )
 
 

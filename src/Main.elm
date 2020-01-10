@@ -11,7 +11,7 @@ import Grid exposing (Grid)
 import Heap
 import Html as RootHtml
 import Html.Styled as Html exposing (Html)
-import Html.Styled.Attributes exposing (css, style)
+import Html.Styled.Attributes as Attributes exposing (css, style)
 import Html.Styled.Events as Events
 import Image exposing (Image)
 import Murmur3
@@ -233,7 +233,7 @@ view model =
                         average items =
                             List.sum items / toFloat (List.length items)
                     in
-                    Image.viewColor []
+                    Image.viewColor [ Attributes.attribute "data-count" (String.fromInt (Set.size indexes)) ]
                         (Color.fromRGBA
                             { red = average reds
                             , green = average greens
