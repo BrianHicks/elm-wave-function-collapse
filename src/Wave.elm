@@ -153,7 +153,7 @@ propagate :
     -> Wave comparable
     -> Wave comparable
 propagate todo (Wave wave) =
-    case Debug.log "todo" todo of
+    case todo of
         [] ->
             -- stack empty, we're done
             Wave wave
