@@ -203,7 +203,7 @@ propagateInDirection source cell direction ( Wave wave, todo ) =
                             remaining_
                                 |> Set.toList
                                 |> List.filterMap (\value -> Dict.get ( value, direction ) wave.rules)
-                                |> List.foldl Set.intersect Set.empty
+                                |> List.foldl Set.union Set.empty
 
                 reduced =
                     Set.intersect remaining possibleInDirection
