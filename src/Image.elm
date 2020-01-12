@@ -50,32 +50,25 @@ recurse =
         k =
             Color.fromRGBA { red = 43, green = 45, blue = 45, alpha = Color.opaque }
     in
-    case
-        Grid.fromRowsAndColumns
-            [ List.repeat 14 t
-            , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
-            , [ t, k, w, w, w, w, w, w, w, w, w, w, k, t ]
-            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
-            , [ t, k, w, g, k, g, k, g, k, k, k, w, k, t ]
-            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
-            , [ t, k, w, k, g, g, k, g, g, k, k, w, k, t ]
-            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
-            , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
-            , [ t, k, w, w, w, w, w, w, w, w, w, w, k, t ]
-            , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
-            , [ t, t, t, t, t, k, k, k, k, t, t, t, t, t ]
-            , [ t, t, k, k, k, k, k, k, k, k, k, k, t, t ]
-            , [ t, k, k, k, w, k, w, k, w, k, w, k, k, t ]
-            , [ t, k, k, w, k, w, k, w, k, w, k, k, k, t ]
-            , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
-            , List.repeat 14 t
-            ]
-    of
-        Ok grid ->
-            grid
-
-        Err problem ->
-            Debug.todo (Debug.toString problem)
+    Grid.fromRowsAndColumns
+        [ List.repeat 14 t
+        , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
+        , [ t, k, w, w, w, w, w, w, w, w, w, w, k, t ]
+        , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
+        , [ t, k, w, g, k, g, k, g, k, k, k, w, k, t ]
+        , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
+        , [ t, k, w, k, g, g, k, g, g, k, k, w, k, t ]
+        , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
+        , [ t, k, w, k, k, k, k, k, k, k, k, w, k, t ]
+        , [ t, k, w, w, w, w, w, w, w, w, w, w, k, t ]
+        , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
+        , [ t, t, t, t, t, k, k, k, k, t, t, t, t, t ]
+        , [ t, t, k, k, k, k, k, k, k, k, k, k, t, t ]
+        , [ t, k, k, k, w, k, w, k, w, k, w, k, k, t ]
+        , [ t, k, k, w, k, w, k, w, k, w, k, k, k, t ]
+        , [ t, k, k, k, k, k, k, k, k, k, k, k, k, t ]
+        , List.repeat 14 t
+        ]
 
 
 bars : Image
@@ -87,20 +80,13 @@ bars =
         k =
             Color.fromRGBA { red = 45, green = 45, blue = 45, alpha = Color.opaque }
     in
-    case
-        Grid.fromRowsAndColumns
-            [ [ k, b, k, k, k ]
-            , [ b, b, b, b, b ]
-            , [ k, b, k, k, k ]
-            , [ k, b, k, k, k ]
-            , [ k, b, k, k, k ]
-            ]
-    of
-        Ok grid ->
-            grid
-
-        Err problem ->
-            Debug.todo (Debug.toString problem)
+    Grid.fromRowsAndColumns
+        [ [ k, b, k, k, k ]
+        , [ b, b, b, b, b ]
+        , [ k, b, k, k, k ]
+        , [ k, b, k, k, k ]
+        , [ k, b, k, k, k ]
+        ]
 
 
 waves : Image
@@ -112,23 +98,16 @@ waves =
         d =
             Color.fromColor Color.opaque Tango.skyBlue3
     in
-    case
-        Grid.fromRowsAndColumns
-            [ [ d, d, d, d, d, d, d, l ]
-            , [ l, d, d, d, d, d, d, d ]
-            , [ d, l, l, l, d, d, d, d ]
-            , [ d, d, d, d, l, l, d, d ]
-            , [ d, d, d, d, d, d, l, l ]
-            , [ l, l, l, d, d, d, d, d ]
-            , [ d, d, d, l, l, d, d, d ]
-            , [ d, d, d, d, d, l, l, d ]
-            ]
-    of
-        Ok grid ->
-            grid
-
-        Err problem ->
-            Debug.todo (Debug.toString problem)
+    Grid.fromRowsAndColumns
+        [ [ d, d, d, d, d, d, d, l ]
+        , [ l, d, d, d, d, d, d, d ]
+        , [ d, l, l, l, d, d, d, d ]
+        , [ d, d, d, d, l, l, d, d ]
+        , [ d, d, d, d, d, d, l, l ]
+        , [ l, l, l, d, d, d, d, d ]
+        , [ d, d, d, l, l, d, d, d ]
+        , [ d, d, d, d, d, l, l, d ]
+        ]
 
 
 nyan : Image
@@ -154,28 +133,21 @@ nyan =
         k =
             Color.fromRGBA { red = 43, green = 45, blue = 45, alpha = Color.opaque }
     in
-    case
-        Grid.fromRowsAndColumns
-            [ List.repeat 18 t
-            , [ t, t, k, k, t, t, t, t, t, t, t, t, t, k, k, t, t, t ]
-            , [ t, t, k, g, k, t, t, t, t, t, t, t, k, g, g, k, t, t ]
-            , [ t, t, k, g, g, k, t, t, t, t, t, k, g, g, g, k, t, t ]
-            , [ t, t, k, g, g, g, k, k, k, k, k, g, g, g, g, k, t, t ]
-            , [ t, k, g, g, g, g, g, g, g, g, g, g, g, g, g, k, t, t ]
-            , [ t, k, g, g, g, g, g, g, g, g, g, g, g, g, g, k, t, t ]
-            , [ t, k, g, g, g, g, g, g, g, g, g, g, g, g, g, g, k, t ]
-            , [ t, k, g, g, g, w, k, g, g, g, g, g, w, k, g, g, k, t ]
-            , [ t, k, g, g, g, k, k, g, g, g, k, g, k, k, g, g, k, t ]
-            , [ t, k, g, p, p, g, g, g, g, g, g, g, g, g, p, p, k, t ]
-            , [ t, k, g, p, p, g, k, g, g, k, g, g, k, g, p, p, k, t ]
-            , [ t, t, k, g, g, g, k, k, k, k, k, k, k, g, g, k, t, t ]
-            , [ t, t, t, k, g, g, g, g, g, g, g, g, g, g, k, t, t, t ]
-            , [ t, t, t, t, k, k, k, k, k, k, k, k, k, k, t, t, t, t ]
-            , List.repeat 18 t
-            ]
-    of
-        Ok grid ->
-            grid
-
-        Err problem ->
-            Debug.todo (Debug.toString problem)
+    Grid.fromRowsAndColumns
+        [ List.repeat 18 t
+        , [ t, t, k, k, t, t, t, t, t, t, t, t, t, k, k, t, t, t ]
+        , [ t, t, k, g, k, t, t, t, t, t, t, t, k, g, g, k, t, t ]
+        , [ t, t, k, g, g, k, t, t, t, t, t, k, g, g, g, k, t, t ]
+        , [ t, t, k, g, g, g, k, k, k, k, k, g, g, g, g, k, t, t ]
+        , [ t, k, g, g, g, g, g, g, g, g, g, g, g, g, g, k, t, t ]
+        , [ t, k, g, g, g, g, g, g, g, g, g, g, g, g, g, k, t, t ]
+        , [ t, k, g, g, g, g, g, g, g, g, g, g, g, g, g, g, k, t ]
+        , [ t, k, g, g, g, w, k, g, g, g, g, g, w, k, g, g, k, t ]
+        , [ t, k, g, g, g, k, k, g, g, g, k, g, k, k, g, g, k, t ]
+        , [ t, k, g, p, p, g, g, g, g, g, g, g, g, g, p, p, k, t ]
+        , [ t, k, g, p, p, g, k, g, g, k, g, g, k, g, p, p, k, t ]
+        , [ t, t, k, g, g, g, k, k, k, k, k, k, k, g, g, k, t, t ]
+        , [ t, t, t, k, g, g, g, g, g, g, g, g, g, g, k, t, t, t ]
+        , [ t, t, t, t, k, k, k, k, k, k, k, k, k, k, t, t, t, t ]
+        , List.repeat 18 t
+        ]

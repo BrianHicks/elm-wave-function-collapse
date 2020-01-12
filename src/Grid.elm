@@ -37,37 +37,22 @@ If the sizes of the column arrays (the inner ones) don't match up, you'll get a
 `MoreThanOneWidth` error back from this function.
 
 -}
-fromRowsAndColumns : List (List a) -> Result FromRowsAndColumnsProblem (Grid a)
+fromRowsAndColumns : List (List a) -> Grid a
 fromRowsAndColumns rowsAndColumns =
     Array.fromList (List.map Array.fromList rowsAndColumns)
         |> fromRowsAndColumnsArray
 
 
-fromRowsAndColumnsArray : Array (Array a) -> Result FromRowsAndColumnsProblem (Grid a)
+fromRowsAndColumnsArray : Array (Array a) -> Grid a
 fromRowsAndColumnsArray rowsAndColumns =
-    let
-        widths =
-            rowsAndColumns
-                |> Array.foldl (\row soFar -> Set.insert (Array.length row) soFar) Set.empty
-                |> Set.toList
-    in
-    case widths of
-        [] ->
-            (Ok << Grid)
-                { items = rowsAndColumns
-                , width = 0
-                , height = Array.length rowsAndColumns
-                }
-
-        [ width ] ->
-            (Ok << Grid)
-                { items = rowsAndColumns
-                , width = width
-                , height = Array.length rowsAndColumns
-                }
-
-        a :: b :: _ ->
-            Err (MoreThanOneWidth widths)
+    Grid
+        { items = rowsAndColumns
+        , width =
+            Array.get 0 rowsAndColumns
+                |> Maybe.map Array.length
+                |> Maybe.withDefault 0
+        , height = Array.length rowsAndColumns
+        }
 
 
 toArrays : Grid a -> Array (Array a)
