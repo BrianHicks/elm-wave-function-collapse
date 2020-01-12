@@ -74,10 +74,11 @@ init rules weights dimensions =
                         |> Heap.thenBy (.coords >> .column)
                     )
         , items =
-            Grid.fromDimensions (always initialCell)
+            Grid.initialize
                 { rows = dimensions.height
                 , columns = dimensions.width
                 }
+                (always initialCell)
         }
 
 

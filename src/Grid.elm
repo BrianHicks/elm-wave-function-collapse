@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromDimensions, fromRowsAndColumns, fromRowsAndColumnsArray, get, getWrapping, indexedMap, initialize, map, rotate, set, toArrays, topLeft, update, view, windows)
+module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, getWrapping, indexedMap, initialize, map, rotate, set, toArrays, topLeft, update, view, windows)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -27,27 +27,6 @@ initialize { rows, columns } init =
         { items = Array.initialize rows (\row -> Array.initialize columns (\colNum -> init { row = row, column = colNum }))
         , width = columns
         , height = rows
-        }
-
-
-{-| TODO remove this or initialize
--}
-fromDimensions : ({ row : Int, column : Int } -> a) -> { rows : Int, columns : Int } -> Grid a
-fromDimensions initter { rows, columns } =
-    Grid
-        { width = columns
-        , height = rows
-        , items =
-            Array.initialize rows
-                (\rowNum ->
-                    Array.initialize columns
-                        (\colNum ->
-                            initter
-                                { row = rowNum
-                                , column = colNum
-                                }
-                        )
-                )
         }
 
 
