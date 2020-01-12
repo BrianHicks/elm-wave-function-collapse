@@ -21,19 +21,6 @@ type FromRowsAndColumnsProblem
     = MoreThanOneWidth (List Int)
 
 
-{-| Construct a grid from a list of lists. The outer list is a list of rows,
-and the inner lists are values in columns.
-
-If the sizes of the column arrays (the inner ones) don't match up, you'll get a
-`MoreThanOneWidth` error back from this function.
-
--}
-fromRowsAndColumns : List (List a) -> Result FromRowsAndColumnsProblem (Grid a)
-fromRowsAndColumns rowsAndColumns =
-    Array.fromList (List.map Array.fromList rowsAndColumns)
-        |> fromRowsAndColumnsArray
-
-
 initialize : { rows : Int, columns : Int } -> ({ row : Int, column : Int } -> a) -> Grid a
 initialize { rows, columns } init =
     Grid
@@ -62,6 +49,19 @@ fromDimensions initter { rows, columns } =
                         )
                 )
         }
+
+
+{-| Construct a grid from a list of lists. The outer list is a list of rows,
+and the inner lists are values in columns.
+
+If the sizes of the column arrays (the inner ones) don't match up, you'll get a
+`MoreThanOneWidth` error back from this function.
+
+-}
+fromRowsAndColumns : List (List a) -> Result FromRowsAndColumnsProblem (Grid a)
+fromRowsAndColumns rowsAndColumns =
+    Array.fromList (List.map Array.fromList rowsAndColumns)
+        |> fromRowsAndColumnsArray
 
 
 fromRowsAndColumnsArray : Array (Array a) -> Result FromRowsAndColumnsProblem (Grid a)
