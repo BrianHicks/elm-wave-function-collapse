@@ -1,4 +1,4 @@
-module Image exposing (Image, bars, nyan, recurse, view, viewColor, waves)
+module Image exposing (Image, bars, nri, nyan, recurse, view, viewColor, waves)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -150,4 +150,52 @@ nyan =
         , [ t, t, t, k, g, g, g, g, g, g, g, g, g, g, k, t, t, t ]
         , [ t, t, t, t, k, k, k, k, k, k, k, k, k, k, t, t, t, t ]
         , List.repeat 18 t
+        ]
+
+
+nri : Image
+nri =
+    let
+        w =
+            Color.fromRGBA { red = 255, green = 255, blue = 255, alpha = Color.opaque }
+
+        l =
+            Color.fromRGBA { red = 247, green = 127, blue = 163, alpha = Color.opaque }
+
+        p =
+            Color.fromRGBA { red = 243, green = 52, blue = 108, alpha = Color.opaque }
+    in
+    Grid.fromRowsAndColumns
+        [ List.repeat 32 p
+        , List.repeat 32 p
+        , List.repeat 32 p
+        , List.repeat 32 p
+        , List.repeat 32 p
+        , List.repeat 32 p
+        , [ p, p, p, p, p, p, p, p, p, l, l, l, l, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, l, w, w, w, w, w, w, l, p, p, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, w, w, w, w, w, w, w, w, l, p, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, w, w, w, w, w, w, w, w, w, w, p, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, w, l, p, p, l, w, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , [ p, p, p, p, p, p, p, p, l, w, w, w, w, l, p, p, p, p, l, w, w, w, w, l, p, p, p, p, p, p, p, p ]
+        , List.repeat 32 p
+        , List.repeat 32 p
+        , List.repeat 32 p
+        , List.repeat 32 p
+        , List.repeat 32 p
+        , List.repeat 32 p
         ]
