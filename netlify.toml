@@ -1,0 +1,6 @@
+[build]
+  command = "mkdir dist; elm make --output=dist/index.html src/Main.elm"
+  publish = "./dist/"
+
+[build.environment]
+  ELM_HOME = "$NETLIFY_CACHE_DIR/elm"
