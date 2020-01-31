@@ -17,5 +17,9 @@ stdenv.mkDerivation {
     elmPackages.elm-format
     elmPackages.elm-live
     elmPackages.elm-test
+
+    # Publishing on Netlify
+    nodePackages.npm
+    nodejs
   ];
 }
