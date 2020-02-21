@@ -9,25 +9,21 @@ import Test exposing (..)
 getTest : Test
 getTest =
     let
-        grid =
-            Grid.fromRowsAndColumns [ [ () ] ]
+        overInUnderFuzzer =
+            Fuzz.intRange -1 1
     in
     describe "get"
-        [ test "in-bounds coordinates should return the value at the coordinates" <|
-            \_ ->
-                Expect.equal (Just ()) (Grid.get { row = 0, column = 0 } grid)
-        , test "coordinates above the top row should return Nothing" <|
-            \_ ->
-                Expect.equal Nothing (Grid.get { row = -1, column = 0 } grid)
-        , test "coordinates below the bottom row should return Nothing" <|
-            \_ ->
-                Expect.equal Nothing (Grid.get { row = 1, column = 0 } grid)
-        , test "coordinates to the left of the leftmost column should return Nothing" <|
-            \_ ->
-                Expect.equal Nothing (Grid.get { row = 0, column = -1 } grid)
-        , test "coordinates to the right of the rightmost row should return Nothing" <|
-            \_ ->
-                Expect.equal Nothing (Grid.get { row = 0, column = 1 } grid)
+        [ fuzz2 overInUnderFuzzer overInUnderFuzzer "only returns values in bounds" <|
+            \row column ->
+                let
+                    grid =
+                        Grid.initialize { rows = 1, columns = 1 } (always ())
+                in
+                if row == 0 && column == 0 then
+                    Expect.equal (Just ()) (Grid.get { row = row, column = column } grid)
+
+                else
+                    Expect.equal Nothing (Grid.get { row = row, column = column } grid)
         ]
 
 

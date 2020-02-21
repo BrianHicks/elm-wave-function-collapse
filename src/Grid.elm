@@ -159,7 +159,11 @@ cropWrapping bounds (Grid grid) =
 
 get : { row : Int, column : Int } -> Grid a -> Maybe a
 get coords (Grid { items, width }) =
-    Array.get (coords.row * width + coords.column) items
+    if coords.row < 0 || coords.column < 0 then
+        Nothing
+
+    else
+        Array.get (coords.row * width + coords.column) items
 
 
 {-| Still a maybe because the grid could be empty
