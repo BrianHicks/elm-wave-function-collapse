@@ -50,7 +50,7 @@ type Msg
     | Step
     | KeepRunning
     | Reset
-    | ToggleDimUnknown
+    | SetDimUnknown Bool
     | SetRandomSeed Random.Seed
 
 
@@ -139,8 +139,8 @@ update msg model =
             , Cmd.none
             )
 
-        ToggleDimUnknown ->
-            ( { model | dimUnknown = not model.dimUnknown }, Cmd.none )
+        SetDimUnknown dimUnknown ->
+            ( { model | dimUnknown = dimUnknown }, Cmd.none )
 
         SetRandomSeed seed ->
             ( { model | seed = seed }, Cmd.none )
@@ -171,9 +171,21 @@ view model =
             [ Reset.meyerV2
             , Reset.borderBoxV201408
             , h1 [ Html.text "Wave Function Collapse" ]
-            , h2 [ Html.text "Options" ]
-            , h3 [ Html.text "View Options" ]
-            , Html.p [] [ Html.button [ Events.onClick ToggleDimUnknown ] [ Html.text "Toggle Dimming Uknown Cells (debug)" ] ]
+            , Html.form []
+                [ h2 [ Html.text "Options" ]
+                , fieldset
+                    [ legend [ Html.text "View" ]
+                    , Html.label []
+                        [ Html.input
+                            [ Attributes.type_ "checkbox"
+                            , Attributes.checked model.dimUnknown
+                            , Events.onCheck SetDimUnknown
+                            ]
+                            []
+                        , Html.text "Toggle Dimming Unknown Cells"
+                        ]
+                    ]
+                ]
 
             -- , [ ( "Waves", Image.waves )
             --   , ( "Bars", Image.bars )
@@ -278,7 +290,7 @@ view model =
 
 
 h1 : List (Html msg) -> Html msg
-h1 contents =
+h1 =
     Html.h1
         [ css
             [ Css.fontSize (Css.rem 2)
@@ -287,27 +299,29 @@ h1 contents =
             , Css.fontWeight Css.bold
             ]
         ]
-        contents
 
 
 h2 : List (Html msg) -> Html msg
-h2 contents =
+h2 =
     Html.h2
         [ css
             [ Css.fontSize (Css.rem 1.25)
             , Css.lineHeight (Css.rem 1.5)
-            , Css.fontWeight Css.bold
             ]
         ]
-        contents
 
 
-h3 : List (Html msg) -> Html msg
-h3 contents =
-    Html.h3
+fieldset : List (Html msg) -> Html msg
+fieldset =
+    Html.fieldset
         [ css
-            [ Css.fontSize (Css.rem 1.1)
-            , Css.lineHeight (Css.rem 1.25)
+            [ Css.border3 (Css.px 1) Css.solid (Css.hex "000")
+            , Css.padding (Css.px 5)
+            , Css.margin (Css.px 5)
             ]
         ]
-        contents
+
+
+legend : List (Html msg) -> Html msg
+legend =
+    Html.legend [ css [ Css.padding2 (Css.px 3) (Css.px 6) ] ]
