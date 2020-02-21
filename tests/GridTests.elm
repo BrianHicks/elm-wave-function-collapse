@@ -71,14 +71,44 @@ compatibilityTest =
         [ fuzz2 (Fuzz.intRange 0 2) (Fuzz.intRange 0 2) "initialize" <|
             \rows columns ->
                 let
-                    initter =
-                        \{ row, column } -> ( row, column )
-
                     expected =
                         SlowGrid.toArrays (SlowGrid.initialize { rows = rows, columns = columns } identity)
 
                     actual =
                         Grid.toArrays (Grid.initialize { rows = rows, columns = columns } identity)
+                in
+                Expect.equal expected actual
+        , fuzz2 (Fuzz.intRange 0 2) (Fuzz.intRange 0 2) "rotate" <|
+            \rows columns ->
+                let
+                    expected =
+                        SlowGrid.initialize { rows = rows, columns = columns } identity
+                            |> SlowGrid.rotate
+                            |> SlowGrid.toArrays
+
+                    actual =
+                        Grid.initialize { rows = rows, columns = columns } identity
+                            |> Grid.rotate
+                            |> Grid.toArrays
+                in
+                Expect.equal expected actual
+        , fuzz2 (Fuzz.intRange 0 4) (Fuzz.intRange 0 4) "windows" <|
+            \rows columns ->
+                let
+                    windowSize =
+                        { width = columns // 2, height = rows // 2 }
+
+                    expected =
+                        SlowGrid.initialize { rows = rows, columns = columns } identity
+                            |> SlowGrid.windows windowSize
+                            |> SlowGrid.map SlowGrid.toArrays
+                            |> SlowGrid.toArrays
+
+                    actual =
+                        Grid.initialize { rows = rows, columns = columns } identity
+                            |> Grid.windows windowSize
+                            |> Grid.map Grid.toArrays
+                            |> Grid.toArrays
                 in
                 Expect.equal expected actual
         ]
