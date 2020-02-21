@@ -159,7 +159,9 @@ cropWrapping bounds (Grid grid) =
 
 get : { row : Int, column : Int } -> Grid a -> Maybe a
 get coords (Grid { items, width }) =
-    if coords.row < 0 || coords.column < 0 then
+    -- we don't need to check row; a row above the max will be a Nothing in the
+    -- lookup below anyway.
+    if coords.row < 0 || coords.column < 0 || coords.column > width - 1 then
         Nothing
 
     else

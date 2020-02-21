@@ -111,6 +111,28 @@ compatibilityTest =
                             |> Grid.toArrays
                 in
                 Expect.equal expected actual
+        , fuzz2
+            (Fuzz.map2 (\rows columns -> { rows = rows, columns = columns })
+                (Fuzz.intRange 0 2)
+                (Fuzz.intRange 0 2)
+            )
+            (Fuzz.map2 (\row column -> { row = row, column = column })
+                (Fuzz.intRange -1 3)
+                (Fuzz.intRange -1 3)
+            )
+            "get"
+          <|
+            \size coords ->
+                let
+                    expected =
+                        SlowGrid.initialize size identity
+                            |> SlowGrid.get coords
+
+                    actual =
+                        Grid.initialize size identity
+                            |> Grid.get coords
+                in
+                Expect.equal expected actual
         ]
 
 
