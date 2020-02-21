@@ -25,7 +25,7 @@ import Wave exposing (Wave)
 type alias Model =
     { -- OPTIONS
       options : Options
-    , previousOptions : Maybe Options
+    , draftOptions : Options
 
     -- DISPLAY OPTIONS
     , dimUnknown : Bool
@@ -49,6 +49,7 @@ type Msg
     | Stop
     | Step
     | KeepRunning
+    | Reset
     | ToggleDimUnknown
     | SetRandomSeed Random.Seed
 
@@ -63,7 +64,7 @@ init _ =
             }
     in
     ( { options = options
-      , previousOptions = Nothing
+      , draftOptions = options
       , dimUnknown = True
       , running = False
       , wave =
@@ -125,6 +126,19 @@ update msg model =
             else
                 ( model, Cmd.none )
 
+        Reset ->
+            ( { model
+                | wave =
+                    Wave.load
+                        { windowSize = model.options.windowSize
+                        , waveSize = model.options.waveSize
+                        , hash = imageHash
+                        }
+                        model.options.image
+              }
+            , Cmd.none
+            )
+
         ToggleDimUnknown ->
             ( { model | dimUnknown = not model.dimUnknown }, Cmd.none )
 
@@ -157,7 +171,9 @@ view model =
             [ Reset.meyerV2
             , Reset.borderBoxV201408
             , h1 [ Html.text "Wave Function Collapse" ]
-            , h2 [ Html.text "Source Image" ]
+            , h2 [ Html.text "Options" ]
+            , h3 [ Html.text "View Options" ]
+            , Html.p [] [ Html.button [ Events.onClick ToggleDimUnknown ] [ Html.text "Toggle Dimming Uknown Cells (debug)" ] ]
 
             -- , [ ( "Waves", Image.waves )
             --   , ( "Bars", Image.bars )
@@ -178,23 +194,6 @@ view model =
             --                 |> Html.p []
             --         )
             --     |> Html.div []
-            , Image.view [] model.options.image
-            , Html.details []
-                [ Html.summary [] [ Html.text "Windows" ]
-
-                -- , model.windows
-                --     |> Grid.view
-                --         (\window ->
-                --             Html.div
-                --                 [ css
-                --                     [ Css.border3 (Css.px 1) Css.solid (Css.hex "000")
-                --                     , Css.display Css.inlineBlock
-                --                     , Css.margin (Css.px 5)
-                --                     ]
-                --                 ]
-                --                 [ Image.view [] window ]
-                --         )
-                ]
             , h2 [ Html.text "Wave" ]
             , Html.p []
                 [ if model.running then
@@ -203,83 +202,78 @@ view model =
                   else
                     Html.button [ Events.onClick Start ] [ Html.text "Start" ]
                 , Html.button [ Events.onClick Step ] [ Html.text "Step" ]
+                , Html.button [ Events.onClick Reset ] [ Html.text "Reset" ]
                 ]
+            , Html.div [ css [ Css.displayFlex ] ]
+                [ Image.view [] model.options.image
+                , Wave.view
+                    (\windows cell ->
+                        case cell of
+                            Wave.Collapsed tile ->
+                                case Dict.get tile windows |> Maybe.andThen Grid.topLeft of
+                                    Just color ->
+                                        Image.viewColor [] color
 
-            -- , Html.p []
-            --     [ Html.button [ Events.onClick (Reset { width = 2, height = 2 }) ] [ Html.text "Reset (2x2)" ]
-            --     , Html.button [ Events.onClick (Reset { width = 5, height = 5 }) ] [ Html.text "Reset (5x5)" ]
-            --     , Html.button [ Events.onClick (Reset { width = 10, height = 10 }) ] [ Html.text "Reset (10x10)" ]
-            --     , Html.button [ Events.onClick (Reset { width = 20, height = 20 }) ] [ Html.text "Reset (20x20)" ]
-            --     , Html.button [ Events.onClick (Reset { width = 50, height = 50 }) ] [ Html.text "Reset (50x50)" ]
-            --     ]
-            , Html.p [] [ Html.button [ Events.onClick ToggleDimUnknown ] [ Html.text "Toggle Dimming Uknown Cells (debug)" ] ]
-            , Wave.view
-                (\windows cell ->
-                    case cell of
-                        Wave.Collapsed tile ->
-                            case Dict.get tile windows |> Maybe.andThen Grid.topLeft of
-                                Just color ->
-                                    Image.viewColor [] color
+                                    Nothing ->
+                                        Html.text "invalid index"
 
-                                Nothing ->
-                                    Html.text "invalid index"
+                            Wave.Open indexes ->
+                                let
+                                    { reds, blues, greens, opacities } =
+                                        indexes
+                                            |> Set.toList
+                                            |> List.filterMap (\i -> Dict.get i windows)
+                                            |> List.filterMap Grid.topLeft
+                                            |> List.foldl
+                                                (\color soFar ->
+                                                    let
+                                                        rgba =
+                                                            Color.toRGBA color
+                                                    in
+                                                    { reds = rgba.red :: soFar.reds
+                                                    , blues = rgba.blue :: soFar.blues
+                                                    , greens = rgba.green :: soFar.greens
+                                                    , opacities = Color.opacityToFloat rgba.alpha :: soFar.opacities
+                                                    }
+                                                )
+                                                { reds = [], greens = [], blues = [], opacities = [] }
 
-                        Wave.Open indexes ->
-                            let
-                                { reds, blues, greens, opacities } =
-                                    indexes
-                                        |> Set.toList
-                                        |> List.filterMap (\i -> Dict.get i windows)
-                                        |> List.filterMap Grid.topLeft
-                                        |> List.foldl
-                                            (\color soFar ->
-                                                let
-                                                    rgba =
-                                                        Color.toRGBA color
-                                                in
-                                                { reds = rgba.red :: soFar.reds
-                                                , blues = rgba.blue :: soFar.blues
-                                                , greens = rgba.green :: soFar.greens
-                                                , opacities = Color.opacityToFloat rgba.alpha :: soFar.opacities
-                                                }
-                                            )
-                                            { reds = [], greens = [], blues = [], opacities = [] }
-
-                                average items =
-                                    List.sum items / toFloat (List.length items)
-                            in
-                            if Set.isEmpty indexes then
-                                Html.td
-                                    [ css
-                                        [ Css.lineHeight (Css.px 10)
-                                        , Css.fontSize (Css.px 10)
-                                        , Css.textAlign Css.center
+                                    average items =
+                                        List.sum items / toFloat (List.length items)
+                                in
+                                if Set.isEmpty indexes then
+                                    Html.td
+                                        [ css
+                                            [ Css.lineHeight (Css.px 10)
+                                            , Css.fontSize (Css.px 10)
+                                            , Css.textAlign Css.center
+                                            ]
+                                        , Attributes.width 10
+                                        , Attributes.height 10
                                         ]
-                                    , Attributes.width 10
-                                    , Attributes.height 10
-                                    ]
-                                    [ Html.text "×" ]
+                                        [ Html.text "×" ]
 
-                            else
-                                Image.viewColor
-                                    [ Attributes.attribute "data-count" (String.fromInt (Set.size indexes))
-                                    , style "opacity"
-                                        (if model.dimUnknown then
-                                            "0.5"
+                                else
+                                    Image.viewColor
+                                        [ Attributes.attribute "data-count" (String.fromInt (Set.size indexes))
+                                        , style "opacity"
+                                            (if model.dimUnknown then
+                                                "0.5"
 
-                                         else
-                                            "1"
+                                             else
+                                                "1"
+                                            )
+                                        ]
+                                        (Color.fromRGBA
+                                            { red = average reds
+                                            , green = average greens
+                                            , blue = average blues
+                                            , alpha = Color.customOpacity (average opacities)
+                                            }
                                         )
-                                    ]
-                                    (Color.fromRGBA
-                                        { red = average reds
-                                        , green = average greens
-                                        , blue = average blues
-                                        , alpha = Color.customOpacity (average opacities)
-                                        }
-                                    )
-                )
-                model.wave
+                    )
+                    model.wave
+                ]
             ]
 
 
@@ -302,6 +296,18 @@ h2 contents =
         [ css
             [ Css.fontSize (Css.rem 1.25)
             , Css.lineHeight (Css.rem 1.5)
+            , Css.fontWeight Css.bold
+            ]
+        ]
+        contents
+
+
+h3 : List (Html msg) -> Html msg
+h3 contents =
+    Html.h3
+        [ css
+            [ Css.fontSize (Css.rem 1.1)
+            , Css.lineHeight (Css.rem 1.25)
             ]
         ]
         contents
