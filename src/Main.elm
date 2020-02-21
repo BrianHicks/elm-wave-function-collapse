@@ -45,10 +45,10 @@ type alias Options =
 
 
 type Msg
-    = Reset { width : Int, height : Int }
-    | Start
+    = Start
     | Stop
     | Step
+    | KeepRunning
     | ToggleDimUnknown
     | SetRandomSeed Random.Seed
 
@@ -95,37 +95,35 @@ imageHash =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Reset dimensions ->
-            ( { model
-                | wave =
-                    Wave.load
-                        { windowSize = model.options.windowSize
-                        , waveSize = model.options.waveSize
-                        , hash = imageHash
-                        }
-                        model.options.image
-              }
-            , Cmd.none
-            )
-
         Step ->
             let
                 ( newWave, newSeed ) =
                     Wave.step model.seed model.wave
             in
             ( { model | wave = newWave, seed = newSeed }
-            , if model.running then
-                Task.perform (\_ -> Step) (Process.sleep 0)
-
-              else
-                Cmd.none
+            , Cmd.none
             )
 
         Start ->
-            update Step { model | running = True }
+            update KeepRunning { model | running = True }
 
         Stop ->
             ( { model | running = False }, Cmd.none )
+
+        KeepRunning ->
+            if model.running then
+                model
+                    |> update Step
+                    |> Tuple.mapSecond
+                        (\cmd ->
+                            Cmd.batch
+                                [ Task.perform (\_ -> KeepRunning) (Process.sleep 0)
+                                , cmd
+                                ]
+                        )
+
+            else
+                ( model, Cmd.none )
 
         ToggleDimUnknown ->
             ( { model | dimUnknown = not model.dimUnknown }, Cmd.none )
@@ -206,13 +204,14 @@ view model =
                     Html.button [ Events.onClick Start ] [ Html.text "Start" ]
                 , Html.button [ Events.onClick Step ] [ Html.text "Step" ]
                 ]
-            , Html.p []
-                [ Html.button [ Events.onClick (Reset { width = 2, height = 2 }) ] [ Html.text "Reset (2x2)" ]
-                , Html.button [ Events.onClick (Reset { width = 5, height = 5 }) ] [ Html.text "Reset (5x5)" ]
-                , Html.button [ Events.onClick (Reset { width = 10, height = 10 }) ] [ Html.text "Reset (10x10)" ]
-                , Html.button [ Events.onClick (Reset { width = 20, height = 20 }) ] [ Html.text "Reset (20x20)" ]
-                , Html.button [ Events.onClick (Reset { width = 50, height = 50 }) ] [ Html.text "Reset (50x50)" ]
-                ]
+
+            -- , Html.p []
+            --     [ Html.button [ Events.onClick (Reset { width = 2, height = 2 }) ] [ Html.text "Reset (2x2)" ]
+            --     , Html.button [ Events.onClick (Reset { width = 5, height = 5 }) ] [ Html.text "Reset (5x5)" ]
+            --     , Html.button [ Events.onClick (Reset { width = 10, height = 10 }) ] [ Html.text "Reset (10x10)" ]
+            --     , Html.button [ Events.onClick (Reset { width = 20, height = 20 }) ] [ Html.text "Reset (20x20)" ]
+            --     , Html.button [ Events.onClick (Reset { width = 50, height = 50 }) ] [ Html.text "Reset (50x50)" ]
+            --     ]
             , Html.p [] [ Html.button [ Events.onClick ToggleDimUnknown ] [ Html.text "Toggle Dimming Uknown Cells (debug)" ] ]
             , Wave.view
                 (\windows cell ->
