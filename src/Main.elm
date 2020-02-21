@@ -25,14 +25,10 @@ import Wave exposing (Wave)
 type alias Model =
     { image : Image
     , windowSize : { width : Int, height : Int }
-    , windows : Grid Image
-    , wave : Wave Int
+    , wave : Wave Color.Color Int
     , waveSize : { width : Int, height : Int }
     , seed : Random.Seed
     , running : Bool
-    , indexes : Dict Int Image
-    , weights : Dict Int Int
-    , rules : Adjacency.Rules Int
     , showEntropy : Bool
     , dimUnknown : Bool
     }
@@ -57,77 +53,34 @@ init _ =
 
 load : Image -> { width : Int, height : Int } -> Model
 load image windowSize =
-    let
-        windows =
-            Grid.windows windowSize image
-
-        withIndex =
-            Grid.map
-                (\window ->
-                    ( window
-                        |> Grid.toArrays
-                        |> Array.foldr
-                            (\row rowString ->
-                                Array.foldr (\value string -> Color.toRGBAString value ++ string)
-                                    rowString
-                                    row
-                            )
-                            ""
-                        |> Murmur3.hashString 0
-                    , window
-                    )
-                )
-                windows
-
-        indexes =
-            -- wow there is a lot of conversion happening here. Probably should
-            -- come back and make it more efficient sometime.
-            withIndex
-                |> Grid.toArrays
-                |> Array.foldl Array.append Array.empty
-                |> Array.toList
-                |> Dict.fromList
-
-        weights =
-            -- wow there is a lot of conversion happening here. Probably should
-            -- come back and make it more efficient sometime.
-            withIndex
-                |> Grid.toArrays
-                |> Array.foldl Array.append Array.empty
-                |> Array.foldl
-                    (\( id, _ ) dict ->
-                        Dict.update id
-                            (\maybeCount ->
-                                case maybeCount of
-                                    Just count ->
-                                        Just (count + 1)
-
-                                    Nothing ->
-                                        Just 1
-                            )
-                            dict
-                    )
-                    Dict.empty
-
-        rules =
-            withIndex
-                |> Grid.map Tuple.first
-                |> Adjacency.fromIds
-                |> Adjacency.finalize
-    in
     { image = image
     , windowSize = windowSize
-    , windows = windows
-    , wave = Wave.init rules weights { width = 20, height = 20 }
+    , wave =
+        Wave.load
+            { windowSize = windowSize
+            , waveSize = { width = 20, height = 20 }
+            , hash = imageHash
+            }
+            image
     , waveSize = { width = 20, height = 20 }
     , seed = Random.initialSeed 0
     , running = False
-    , indexes = indexes
-    , weights = weights
-    , rules = rules
     , showEntropy = False
     , dimUnknown = False
     }
+
+
+imageHash : Image -> Int
+imageHash =
+    Grid.toArrays
+        >> Array.foldr
+            (\row rowString ->
+                Array.foldr (\value string -> Color.toRGBAString value ++ string)
+                    rowString
+                    row
+            )
+            ""
+        >> Murmur3.hashString 0
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -135,7 +88,13 @@ update msg model =
     case msg of
         Reset dimensions ->
             ( { model
-                | wave = Wave.init model.rules model.weights dimensions
+                | wave =
+                    Wave.load
+                        { windowSize = model.windowSize
+                        , waveSize = dimensions
+                        , hash = imageHash
+                        }
+                        model.image
                 , waveSize = dimensions
               }
             , Cmd.none
@@ -218,18 +177,19 @@ view model =
             , Image.view [] model.image
             , Html.details []
                 [ Html.summary [] [ Html.text "Windows" ]
-                , model.windows
-                    |> Grid.view
-                        (\window ->
-                            Html.div
-                                [ css
-                                    [ Css.border3 (Css.px 1) Css.solid (Css.hex "000")
-                                    , Css.display Css.inlineBlock
-                                    , Css.margin (Css.px 5)
-                                    ]
-                                ]
-                                [ Image.view [] window ]
-                        )
+
+                -- , model.windows
+                --     |> Grid.view
+                --         (\window ->
+                --             Html.div
+                --                 [ css
+                --                     [ Css.border3 (Css.px 1) Css.solid (Css.hex "000")
+                --                     , Css.display Css.inlineBlock
+                --                     , Css.margin (Css.px 5)
+                --                     ]
+                --                 ]
+                --                 [ Image.view [] window ]
+                --         )
                 ]
             , h2 [ Html.text "Wave" ]
             , Html.p []
@@ -252,10 +212,10 @@ view model =
                 , Html.button [ Events.onClick ToggleDimUnknown ] [ Html.text "Toggle Dimming Uknown Cells (debug)" ]
                 ]
             , Wave.view
-                (\cell ->
+                (\windows cell ->
                     case cell of
                         Wave.Collapsed tile ->
-                            case Dict.get tile model.indexes |> Maybe.andThen Grid.topLeft of
+                            case Dict.get tile windows |> Maybe.andThen Grid.topLeft of
                                 Just color ->
                                     Image.viewColor [] color
 
@@ -267,7 +227,7 @@ view model =
                                 { reds, blues, greens, opacities } =
                                     indexes
                                         |> Set.toList
-                                        |> List.filterMap (\i -> Dict.get i model.indexes)
+                                        |> List.filterMap (\i -> Dict.get i windows)
                                         |> List.filterMap Grid.topLeft
                                         |> List.foldl
                                             (\color soFar ->

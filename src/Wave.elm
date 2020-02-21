@@ -1,6 +1,7 @@
-module Wave exposing (Cell(..), Wave, getEntropy, init, step, view)
+module Wave exposing (Cell(..), Wave, getEntropy, init, load, step, view)
 
 import Adjacency
+import Array
 import Dict exposing (Dict)
 import Direction exposing (Direction)
 import Grid exposing (Grid)
@@ -21,12 +22,13 @@ type Cell comparable
     | Collapsed comparable
 
 
-type Wave comparable
+type Wave a comparable
     = Wave
         { weights : Dict comparable Int
         , rules : Adjacency.Rules comparable
         , entropy : Heap Entropy
         , items : Grid (Cell comparable)
+        , windows : Dict comparable (Grid a)
         }
 
 
@@ -34,7 +36,7 @@ type Wave comparable
 -- DEBUG INFO
 
 
-getEntropy : Wave comparable -> Heap Entropy
+getEntropy : Wave a comparable -> Heap Entropy
 getEntropy (Wave guts) =
     guts.entropy
 
@@ -43,8 +45,76 @@ getEntropy (Wave guts) =
 -- END DEBUG
 
 
-init : Adjacency.Rules comparable -> Dict comparable Int -> { width : Int, height : Int } -> Wave comparable
-init rules weights dimensions =
+{-| TODO: this should maybe be init and the thing that is `init` now could be
+called `custom`? Or something?
+-}
+load :
+    { windowSize : { width : Int, height : Int }
+    , waveSize : { width : Int, height : Int }
+    , hash : Grid a -> comparable
+    }
+    -> Grid a
+    -> Wave a comparable
+load options grid =
+    let
+        windows : Grid (Grid a)
+        windows =
+            Grid.windows options.windowSize grid
+
+        withIndex : Grid ( comparable, Grid a )
+        withIndex =
+            Grid.map
+                (\window ->
+                    ( options.hash window
+                    , window
+                    )
+                )
+                windows
+
+        indexes : Dict comparable (Grid a)
+        indexes =
+            -- wow there is a lot of conversion happening here. Probably should
+            -- come back and make it more efficient sometime.
+            withIndex
+                |> Grid.toArrays
+                |> Array.foldl Array.append Array.empty
+                |> Array.toList
+                |> Dict.fromList
+
+        weights : Dict comparable Int
+        weights =
+            -- wow there is a lot of conversion happening here. Probably should
+            -- come back and make it more efficient sometime.
+            withIndex
+                |> Grid.toArrays
+                |> Array.foldl Array.append Array.empty
+                |> Array.foldl
+                    (\( id, _ ) dict ->
+                        Dict.update id
+                            (\maybeCount ->
+                                case maybeCount of
+                                    Just count ->
+                                        Just (count + 1)
+
+                                    Nothing ->
+                                        Just 1
+                            )
+                            dict
+                    )
+                    Dict.empty
+
+        rules : Adjacency.Rules comparable
+        rules =
+            withIndex
+                |> Grid.map Tuple.first
+                |> Adjacency.fromIds
+                |> Adjacency.finalize
+    in
+    init indexes rules weights options.waveSize
+
+
+init : Dict comparable (Grid a) -> Adjacency.Rules comparable -> Dict comparable Int -> { width : Int, height : Int } -> Wave a comparable
+init windows rules weights dimensions =
     let
         initialCell =
             Open (Set.fromList (Dict.keys weights))
@@ -53,7 +123,8 @@ init rules weights dimensions =
             entropy weights (Set.fromList (Dict.keys weights))
     in
     Wave
-        { weights = weights
+        { windows = windows
+        , weights = weights
         , rules = rules
         , entropy =
             List.range 0 (dimensions.width - 1)
@@ -82,7 +153,7 @@ init rules weights dimensions =
         }
 
 
-step : Random.Seed -> Wave comparable -> ( Wave comparable, Random.Seed )
+step : Random.Seed -> Wave a comparable -> ( Wave a comparable, Random.Seed )
 step seed (Wave wave) =
     case Heap.pop wave.entropy of
         Just ( { coords }, poppedEntropy ) ->
@@ -95,7 +166,7 @@ step seed (Wave wave) =
 
 {-| Step one!
 -}
-collapse : Random.Seed -> { row : Int, column : Int } -> Wave comparable -> ( Wave comparable, Random.Seed )
+collapse : Random.Seed -> { row : Int, column : Int } -> Wave a comparable -> ( Wave a comparable, Random.Seed )
 collapse seed coords (Wave wave) =
     case Grid.get coords wave.items of
         Just (Open remaining) ->
@@ -151,8 +222,8 @@ collapse seed coords (Wave wave) =
 
 propagate :
     List { row : Int, column : Int }
-    -> Wave comparable
-    -> Wave comparable
+    -> Wave a comparable
+    -> Wave a comparable
 propagate todo (Wave wave) =
     case todo of
         [] ->
@@ -191,8 +262,8 @@ propagateInDirection :
     { row : Int, column : Int }
     -> Cell comparable
     -> Direction
-    -> ( Wave comparable, List { row : Int, column : Int } )
-    -> ( Wave comparable, List { row : Int, column : Int } )
+    -> ( Wave a comparable, List { row : Int, column : Int } )
+    -> ( Wave a comparable, List { row : Int, column : Int } )
 propagateInDirection source sourceCell direction ( Wave wave, todo ) =
     let
         target =
@@ -273,6 +344,6 @@ entropy weights possibilities =
         |> List.sum
 
 
-view : (Cell comparable -> Html msg) -> Wave comparable -> Html msg
-view viewCell (Wave { items }) =
-    Grid.view viewCell items
+view : (Dict comparable (Grid a) -> Cell comparable -> Html msg) -> Wave a comparable -> Html msg
+view viewCell (Wave { items, windows }) =
+    Grid.view (viewCell windows) items
