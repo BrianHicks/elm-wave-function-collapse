@@ -239,7 +239,7 @@ propagateInDirection source sourceCell direction ( Wave wave, todo ) =
                                 wave.entropy
                     }
                 , if Set.isEmpty reduced then
-                    -- we're blocked and should stop immediately
+                    -- we're blocked and should not propagate further
                     []
 
                   else if not (List.member target todo) then
