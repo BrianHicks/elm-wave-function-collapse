@@ -50,7 +50,7 @@ type Msg
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( load Image.waves { width = 3, height = 3 }
+    ( load Image.nyan { width = 2, height = 2 }
     , Cmd.none
     )
 
@@ -118,8 +118,8 @@ load image windowSize =
     { image = image
     , windowSize = windowSize
     , windows = windows
-    , wave = Wave.init rules weights { width = 10, height = 10 }
-    , waveSize = { width = 10, height = 10 }
+    , wave = Wave.init rules weights { width = 20, height = 20 }
+    , waveSize = { width = 20, height = 20 }
     , seed = Random.initialSeed 0
     , running = False
     , indexes = indexes
