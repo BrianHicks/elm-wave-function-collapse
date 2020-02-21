@@ -23,14 +23,24 @@ import Wave exposing (Wave)
 
 
 type alias Model =
+    { -- OPTIONS
+      options : Options
+    , previousOptions : Maybe Options
+
+    -- DISPLAY OPTIONS
+    , dimUnknown : Bool
+
+    -- INTERNAL STATE
+    , running : Bool
+    , wave : Wave Color.Color Int
+    , seed : Random.Seed
+    }
+
+
+type alias Options =
     { image : Image
     , windowSize : { width : Int, height : Int }
-    , wave : Wave Color.Color Int
     , waveSize : { width : Int, height : Int }
-    , seed : Random.Seed
-    , running : Bool
-    , showEntropy : Bool
-    , dimUnknown : Bool
     }
 
 
@@ -39,35 +49,34 @@ type Msg
     | Start
     | Stop
     | Step
-    | ToggleEntropy
     | ToggleDimUnknown
-    | Load Image { width : Int, height : Int }
+    | SetRandomSeed Random.Seed
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( load Image.nyan { width = 2, height = 2 }
-    , Cmd.none
-    )
-
-
-load : Image -> { width : Int, height : Int } -> Model
-load image windowSize =
-    { image = image
-    , windowSize = windowSize
-    , wave =
-        Wave.load
-            { windowSize = windowSize
+    let
+        options =
+            { image = Image.nyan
+            , windowSize = { width = 2, height = 2 }
             , waveSize = { width = 20, height = 20 }
-            , hash = imageHash
             }
-            image
-    , waveSize = { width = 20, height = 20 }
-    , seed = Random.initialSeed 0
-    , running = False
-    , showEntropy = False
-    , dimUnknown = False
-    }
+    in
+    ( { options = options
+      , previousOptions = Nothing
+      , dimUnknown = True
+      , running = False
+      , wave =
+            Wave.load
+                { windowSize = options.windowSize
+                , waveSize = options.waveSize
+                , hash = imageHash
+                }
+                options.image
+      , seed = Random.initialSeed 0
+      }
+    , Random.generate SetRandomSeed Random.independentSeed
+    )
 
 
 imageHash : Image -> Int
@@ -90,12 +99,11 @@ update msg model =
             ( { model
                 | wave =
                     Wave.load
-                        { windowSize = model.windowSize
-                        , waveSize = dimensions
+                        { windowSize = model.options.windowSize
+                        , waveSize = model.options.waveSize
                         , hash = imageHash
                         }
-                        model.image
-                , waveSize = dimensions
+                        model.options.image
               }
             , Cmd.none
             )
@@ -119,14 +127,11 @@ update msg model =
         Stop ->
             ( { model | running = False }, Cmd.none )
 
-        ToggleEntropy ->
-            ( { model | showEntropy = not model.showEntropy }, Cmd.none )
-
         ToggleDimUnknown ->
             ( { model | dimUnknown = not model.dimUnknown }, Cmd.none )
 
-        Load image dimensions ->
-            ( load image dimensions, Cmd.none )
+        SetRandomSeed seed ->
+            ( { model | seed = seed }, Cmd.none )
 
 
 main : Program () Model Msg
@@ -155,26 +160,27 @@ view model =
             , Reset.borderBoxV201408
             , h1 [ Html.text "Wave Function Collapse" ]
             , h2 [ Html.text "Source Image" ]
-            , [ ( "Waves", Image.waves )
-              , ( "Bars", Image.bars )
-              , ( "Recurse", Image.recurse )
-              , ( "Nyan Cat", Image.nyan )
-              , ( "Composition II", Image.mondrianCompositionIIinRedBlueAndYellow )
-              ]
-                |> List.map
-                    (\( name, image ) ->
-                        [ { width = 1, height = 1 }
-                        , { width = 2, height = 2 }
-                        , { width = 3, height = 3 }
-                        ]
-                            |> List.map
-                                (\dimensions ->
-                                    Html.button [ Events.onClick (Load image dimensions) ] [ Html.text (name ++ "(" ++ String.fromInt dimensions.height ++ "x" ++ String.fromInt dimensions.width ++ ")") ]
-                                )
-                            |> Html.p []
-                    )
-                |> Html.div []
-            , Image.view [] model.image
+
+            -- , [ ( "Waves", Image.waves )
+            --   , ( "Bars", Image.bars )
+            --   , ( "Recurse", Image.recurse )
+            --   , ( "Nyan Cat", Image.nyan )
+            --   , ( "Composition II", Image.mondrianCompositionIIinRedBlueAndYellow )
+            --   ]
+            --     |> List.map
+            --         (\( name, image ) ->
+            --             [ { width = 1, height = 1 }
+            --             , { width = 2, height = 2 }
+            --             , { width = 3, height = 3 }
+            --             ]
+            --                 |> List.map
+            --                     (\dimensions ->
+            --                         Html.button [ Events.onClick (Load image dimensions) ] [ Html.text (name ++ "(" ++ String.fromInt dimensions.height ++ "x" ++ String.fromInt dimensions.width ++ ")") ]
+            --                     )
+            --                 |> Html.p []
+            --         )
+            --     |> Html.div []
+            , Image.view [] model.options.image
             , Html.details []
                 [ Html.summary [] [ Html.text "Windows" ]
 
@@ -207,10 +213,7 @@ view model =
                 , Html.button [ Events.onClick (Reset { width = 20, height = 20 }) ] [ Html.text "Reset (20x20)" ]
                 , Html.button [ Events.onClick (Reset { width = 50, height = 50 }) ] [ Html.text "Reset (50x50)" ]
                 ]
-            , Html.p []
-                [ Html.button [ Events.onClick ToggleEntropy ] [ Html.text "Toggle Entropy (debug)" ]
-                , Html.button [ Events.onClick ToggleDimUnknown ] [ Html.text "Toggle Dimming Uknown Cells (debug)" ]
-                ]
+            , Html.p [] [ Html.button [ Events.onClick ToggleDimUnknown ] [ Html.text "Toggle Dimming Uknown Cells (debug)" ] ]
             , Wave.view
                 (\windows cell ->
                     case cell of
@@ -278,71 +281,6 @@ view model =
                                     )
                 )
                 model.wave
-            , if model.showEntropy then
-                let
-                    entropies =
-                        Wave.getEntropy model.wave
-                in
-                Html.div []
-                    [ Html.text "Entropy Info"
-                    , Html.p []
-                        [ Html.text "Next: "
-                        , case Heap.peek entropies of
-                            Nothing ->
-                                Html.text "Nothing"
-
-                            Just { coords, entropy } ->
-                                Html.span []
-                                    [ Html.text (String.fromFloat entropy)
-                                    , Html.text " @ "
-                                    , Html.text (String.fromInt coords.row)
-                                    , Html.text ","
-                                    , Html.text (String.fromInt coords.column)
-                                    ]
-                        ]
-                    , Html.p []
-                        [ Html.text "Total: "
-                        , Html.text (String.fromInt (Heap.size entropies))
-                        ]
-                    , entropies
-                        |> Heap.toList
-                        |> List.foldl
-                            (\new grid ->
-                                Grid.update
-                                    (\maybeExisting ->
-                                        case maybeExisting of
-                                            Nothing ->
-                                                Just new
-
-                                            Just existing ->
-                                                if existing.entropy < new.entropy then
-                                                    Just existing
-
-                                                else
-                                                    Just new
-                                    )
-                                    { row = new.coords.row, column = new.coords.column }
-                                    grid
-                            )
-                            (Grid.initialize
-                                { rows = model.waveSize.height
-                                , columns = model.waveSize.width
-                                }
-                                (always Nothing)
-                            )
-                        |> Grid.view
-                            (\value ->
-                                Html.td [ css [ Css.padding (Css.px 2) ] ]
-                                    [ value
-                                        |> Maybe.map (String.fromFloat << .entropy)
-                                        |> Maybe.withDefault "-"
-                                        |> Html.text
-                                    ]
-                            )
-                    ]
-
-              else
-                Html.text ""
             ]
 
 
