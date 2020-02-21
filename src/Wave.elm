@@ -166,10 +166,25 @@ propagate todo (Wave wave) =
                     propagate rest (Wave wave)
 
                 Just cell ->
-                    [ Direction.up, Direction.down, Direction.left, Direction.right ]
-                        |> List.foldl (propagateInDirection target cell) ( Wave wave, rest )
-                        -- TODO this prevents TCO. Should rearrange the code once it works.
-                        |> (\( finalWave, finalRest ) -> propagate finalRest finalWave)
+                    -- Starting at the given cell, constrain neighbor cells to
+                    -- possibilities compatible with the ones in this cell. If
+                    -- we reduce the number of possibilities, we then
+                    -- propagate again based on that new cell.
+                    --
+                    -- While doing this, if a cell becomes finalized (that is,
+                    -- we remove all possibilites but one) we mark them as such
+                    -- and continue propagation.
+                    --
+                    -- If a cell becomes blocked (that is, we remove all
+                    -- possibilities) we mark it as such and stop propagation.
+                    let
+                        ( propagatedWave, propagatedTodo ) =
+                            List.foldl (propagateInDirection target cell)
+                                ( Wave wave, rest )
+                                [ Direction.up, Direction.down, Direction.left, Direction.right ]
+                    in
+                    -- be careful that this can be TCO'd
+                    propagate propagatedTodo propagatedWave
 
 
 propagateInDirection :
