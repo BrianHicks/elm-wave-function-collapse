@@ -223,8 +223,7 @@ propagateInDirection source sourceCell direction ( Wave wave, todo ) =
                                 }
                                 wave.entropy
                     }
-                , -- TODO: add this as a target for propagation if it's not already in this list -
-                  if Set.isEmpty reduced then
+                , if Set.isEmpty reduced then
                     -- we're blocked and should stop immediately
                     []
 
