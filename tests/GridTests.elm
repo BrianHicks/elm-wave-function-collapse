@@ -3,6 +3,7 @@ module GridTests exposing (..)
 import Expect
 import Fuzz exposing (Fuzzer)
 import Grid exposing (Grid)
+import SlowGrid
 import Test exposing (..)
 
 
@@ -57,6 +58,29 @@ windowsTest =
                               ]
                             ]
                         )
+        ]
+
+
+
+{- Tests for compatibility with the older, slower, but known-good version. -}
+
+
+compatibilityTest : Test
+compatibilityTest =
+    describe "compatibility with the array-of-arrays implementation"
+        [ fuzz2 (Fuzz.intRange 0 2) (Fuzz.intRange 0 2) "initialize" <|
+            \rows columns ->
+                let
+                    initter =
+                        \{ row, column } -> ( row, column )
+
+                    expected =
+                        SlowGrid.toArrays (SlowGrid.initialize { rows = rows, columns = columns } identity)
+
+                    actual =
+                        Grid.toArrays (Grid.initialize { rows = rows, columns = columns } identity)
+                in
+                Expect.equal expected actual
         ]
 
 

@@ -1,4 +1,4 @@
-module Grid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, getWrapping, indexedMap, initialize, map, rotate, set, toArrays, topLeft, update, view, windows)
+module SlowGrid exposing (FromRowsAndColumnsProblem, Grid, fromRowsAndColumns, fromRowsAndColumnsArray, get, getWrapping, indexedMap, initialize, map, rotate, set, toArrays, topLeft, update, view, windows)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -11,7 +11,7 @@ import Set
 type Grid a
     = Grid
         { -- rows x columns
-          items : Array a
+          items : Array (Array a)
         , width : Int
         , height : Int
         }
@@ -24,14 +24,7 @@ type FromRowsAndColumnsProblem
 initialize : { rows : Int, columns : Int } -> ({ row : Int, column : Int } -> a) -> Grid a
 initialize { rows, columns } init =
     Grid
-        { items =
-            Array.initialize (rows * columns)
-                (\i ->
-                    init
-                        { row = i // columns
-                        , column = modBy columns i
-                        }
-                )
+        { items = Array.initialize rows (\row -> Array.initialize columns (\colNum -> init { row = row, column = colNum }))
         , width = columns
         , height = rows
         }
@@ -53,7 +46,7 @@ fromRowsAndColumns rowsAndColumns =
 fromRowsAndColumnsArray : Array (Array a) -> Grid a
 fromRowsAndColumnsArray rowsAndColumns =
     Grid
-        { items = Array.foldr Array.append Array.empty rowsAndColumns
+        { items = rowsAndColumns
         , width =
             Array.get 0 rowsAndColumns
                 |> Maybe.map Array.length
@@ -63,14 +56,8 @@ fromRowsAndColumnsArray rowsAndColumns =
 
 
 toArrays : Grid a -> Array (Array a)
-toArrays (Grid grid) =
-    Array.initialize grid.height
-        (\row ->
-            Array.slice
-                (row * grid.width)
-                (row * grid.width + grid.width)
-                grid.items
-        )
+toArrays (Grid { items }) =
+    items
 
 
 {-| Rotate a grid 90° clockwise.
@@ -86,7 +73,7 @@ rotate ((Grid { width, height }) as grid) =
                             |> Maybe.withDefault Array.empty
                             |> Array.foldr Array.push Array.empty
                     )
-                |> List.foldr Array.append Array.empty
+                |> Array.fromList
     in
     Grid
         { items = newItems
@@ -96,13 +83,15 @@ rotate ((Grid { width, height }) as grid) =
 
 
 column : Int -> Grid a -> Maybe (Array a)
-column colNum (Grid { items, height, width }) =
+column colNum (Grid { items, height }) =
     List.range 0 (height - 1)
         |> List.foldl
             (\row soFar ->
                 Maybe.andThen
                     (\arr ->
-                        Array.get (row * width + colNum) items
+                        items
+                            |> Array.get row
+                            |> Maybe.andThen (Array.get colNum)
                             |> Maybe.map (\val -> Array.push val arr)
                     )
                     soFar
@@ -114,56 +103,48 @@ column colNum (Grid { items, height, width }) =
 edges of the input grid. We include tuples here, as they're useful as IDs.
 -}
 windows : { width : Int, height : Int } -> Grid a -> Grid (Grid a)
-windows sizes ((Grid { width, height, items }) as grid) =
+windows sizes (Grid { width, height, items }) =
+    let
+        -- when we reach the edge, we just need to wrap around.
+        -- Repeating once per axis should do it!
+        expanded =
+            Array.initialize (height * 2)
+                (\i ->
+                    let
+                        row =
+                            items
+                                |> Array.get (modBy height i)
+                                |> Maybe.withDefault Array.empty
+                    in
+                    Array.append row row
+                )
+    in
     Grid
         { items =
-            Array.initialize (height * width)
-                (\cell ->
-                    cropWrapping
-                        { row = cell // width
-                        , column = modBy width cell
-                        , width = sizes.width
-                        , height = sizes.height
-                        }
-                        grid
+            Array.initialize height
+                (\row ->
+                    Array.initialize width
+                        (\col ->
+                            Grid
+                                { items =
+                                    expanded
+                                        |> Array.slice row (row + sizes.height)
+                                        |> Array.map (Array.slice col (col + sizes.width))
+                                , width = sizes.width
+                                , height = sizes.height
+                                }
+                        )
                 )
         , width = width
         , height = height
         }
 
 
-cropWrapping : { row : Int, column : Int, width : Int, height : Int } -> Grid a -> Grid a
-cropWrapping bounds (Grid grid) =
-    let
-        expanded =
-            toArrays (Grid grid)
-                |> Array.map (\row -> Array.append row row)
-                |> (\all -> Array.append all all)
-
-        wrappedRow =
-            modBy grid.height bounds.row
-
-        wrappedColumn =
-            modBy grid.width bounds.column
-    in
-    Grid
-        { items =
-            expanded
-                |> Array.slice wrappedRow (wrappedRow + bounds.height)
-                |> Array.map (Array.slice wrappedColumn (wrappedColumn + bounds.width))
-                |> Array.foldr Array.append Array.empty
-        , width = bounds.width
-        , height = bounds.height
-        }
-
-
 get : { row : Int, column : Int } -> Grid a -> Maybe a
-get coords (Grid { items, width }) =
-    if coords.row < 0 || coords.column < 0 then
-        Nothing
-
-    else
-        Array.get (coords.row * width + coords.column) items
+get coords (Grid { items }) =
+    items
+        |> Array.get coords.row
+        |> Maybe.andThen (Array.get coords.column)
 
 
 {-| Still a maybe because the grid could be empty
@@ -184,14 +165,19 @@ topLeft =
 
 set : { row : Int, column : Int } -> a -> Grid a -> Grid a
 set coords newValue (Grid grid) =
-    Grid
-        { grid
-            | items =
-                Array.set
-                    (coords.row * grid.width + coords.column)
-                    newValue
-                    grid.items
-        }
+    case Array.get coords.row grid.items of
+        Nothing ->
+            Grid grid
+
+        Just row ->
+            Grid
+                { grid
+                    | items =
+                        Array.set
+                            coords.row
+                            (Array.set coords.column newValue row)
+                            grid.items
+                }
 
 
 update : (a -> a) -> { row : Int, column : Int } -> Grid a -> Grid a
@@ -204,17 +190,25 @@ update fn coords grid =
             grid
 
 
+{-| TODO: could probably do this with CSS grids but I'm not sure how.
+-}
+view : (a -> Html msg) -> Grid a -> Html msg
+view viewItem (Grid { items }) =
+    items
+        |> Array.map (Array.map viewItem >> Array.toList >> Html.tr [])
+        |> Array.toList
+        |> Html.table [ css [ Css.borderCollapse Css.collapse ] ]
+
+
 indexedMap : ({ row : Int, column : Int } -> a -> b) -> Grid a -> Grid b
 indexedMap fn (Grid grid) =
     Grid
         { items =
             Array.indexedMap
-                (\i val ->
-                    fn
-                        { row = modBy grid.width i
-                        , column = remainderBy grid.width i
-                        }
-                        val
+                (\rowNum row ->
+                    Array.indexedMap
+                        (\colNum val -> fn { row = rowNum, column = colNum } val)
+                        row
                 )
                 grid.items
         , width = grid.width
@@ -225,13 +219,3 @@ indexedMap fn (Grid grid) =
 map : (a -> b) -> Grid a -> Grid b
 map fn =
     indexedMap (\_ a -> fn a)
-
-
-{-| TODO: could probably do this with CSS grids but I'm not sure how.
--}
-view : (a -> Html msg) -> Grid a -> Html msg
-view viewItem grid =
-    toArrays grid
-        |> Array.map (Array.map viewItem >> Array.toList >> Html.tr [])
-        |> Array.toList
-        |> Html.table [ css [ Css.borderCollapse Css.collapse ] ]
