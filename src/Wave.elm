@@ -12,7 +12,7 @@ import Set exposing (Set)
 
 type alias Entropy =
     { coords : { row : Int, column : Int }
-    , entropy : Int
+    , entropy : Float
     }
 
 
@@ -250,15 +250,25 @@ propagateInDirection source sourceCell direction ( Wave wave, todo ) =
                 )
 
 
-entropy : Dict comparable Int -> Set comparable -> Int
-entropy probabilities possibilities =
-    possibilities
-        |> Set.toList
+entropy : Dict comparable Int -> Set comparable -> Float
+entropy weights possibilities =
+    let
+        total =
+            Dict.values weights |> List.sum |> toFloat
+    in
+    Set.toList possibilities
         |> List.map
             (\item ->
-                probabilities
-                    |> Dict.get item
-                    |> Maybe.withDefault 0
+                case Dict.get item weights of
+                    Just weight ->
+                        let
+                            prob =
+                                toFloat weight / total
+                        in
+                        -(prob * logBase 2 prob)
+
+                    Nothing ->
+                        0.0
             )
         |> List.sum
 

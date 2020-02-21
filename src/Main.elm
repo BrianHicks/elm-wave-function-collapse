@@ -333,7 +333,7 @@ view model =
 
                             Just { coords, entropy } ->
                                 Html.span []
-                                    [ Html.text (String.fromInt entropy)
+                                    [ Html.text (String.fromFloat entropy)
                                     , Html.text " @ "
                                     , Html.text (String.fromInt coords.row)
                                     , Html.text ","
@@ -374,7 +374,7 @@ view model =
                             (\value ->
                                 Html.td [ css [ Css.padding (Css.px 2) ] ]
                                     [ value
-                                        |> Maybe.map (String.fromInt << .entropy)
+                                        |> Maybe.map (String.fromFloat << .entropy)
                                         |> Maybe.withDefault "-"
                                         |> Html.text
                                     ]
