@@ -1,4 +1,4 @@
-module Image exposing (Image, bars, nyan, recurse, view, viewColor, waves)
+module Image exposing (Image, bars, mondrianCompositionIIinRedBlueAndYellow, nyan, recurse, view, viewColor, waves)
 
 import Array exposing (Array)
 import Color.Transparent as Color exposing (Color)
@@ -150,4 +150,68 @@ nyan =
         , [ t, t, t, k, g, g, g, g, g, g, g, g, g, g, k, t, t, t ]
         , [ t, t, t, t, k, k, k, k, k, k, k, k, k, k, t, t, t, t ]
         , List.repeat 18 t
+        ]
+
+
+mondrianCompositionIIinRedBlueAndYellow =
+    let
+        -- Transparent
+        t =
+            Color.fromRGBA { red = 255, green = 255, blue = 255, alpha = Color.transparent }
+
+        -- Key (black)
+        k =
+            Color.fromRGBA { red = 5, green = 13, blue = 10, alpha = Color.opaque }
+
+        -- White
+        w =
+            Color.fromRGBA { red = 226, green = 228, blue = 242, alpha = Color.opaque }
+
+        -- Red
+        r =
+            Color.fromRGBA { red = 223, green = 43, blue = 46, alpha = Color.opaque }
+
+        -- Blue
+        b =
+            Color.fromRGBA { red = 0, green = 89, blue = 155, alpha = Color.opaque }
+
+        -- Yellow
+        y =
+            Color.fromRGBA { red = 232, green = 218, blue = 99, alpha = Color.opaque }
+    in
+    Grid.fromRowsAndColumns
+        [ List.repeat 34 t
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, k, k, k, k, k, k, k, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, k, k, k, k, k, k, k, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, w, w, w, w, w, w, w, k, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, r, t ]
+        , [ t, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, k, t ]
+        , [ t, b, b, b, b, b, b, b, k, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, k, w, w, t ]
+        , [ t, b, b, b, b, b, b, b, k, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, k, w, w, t ]
+        , [ t, b, b, b, b, b, b, b, k, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, k, w, w, t ]
+        , [ t, b, b, b, b, b, b, b, k, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, k, w, w, t ]
+        , [ t, b, b, b, b, b, b, b, k, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, k, k, k, t ]
+        , [ t, b, b, b, b, b, b, b, k, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, k, y, y, t ]
+        , [ t, b, b, b, b, b, b, b, k, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, k, y, y, t ]
+        , [ t, b, b, b, b, b, b, b, k, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, k, y, y, t ]
+        , List.repeat 34 t
         ]

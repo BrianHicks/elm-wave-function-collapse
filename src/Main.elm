@@ -200,6 +200,7 @@ view model =
               , ( "Bars", Image.bars )
               , ( "Recurse", Image.recurse )
               , ( "Nyan Cat", Image.nyan )
+              , ( "Composition II", Image.mondrianCompositionIIinRedBlueAndYellow )
               ]
                 |> List.map
                     (\( name, image ) ->
