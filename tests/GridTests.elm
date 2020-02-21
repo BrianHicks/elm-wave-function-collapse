@@ -6,6 +6,31 @@ import Grid exposing (Grid)
 import Test exposing (..)
 
 
+getTest : Test
+getTest =
+    let
+        grid =
+            Grid.fromRowsAndColumns [ [ () ] ]
+    in
+    describe "get"
+        [ test "in-bounds coordinates should return the value at the coordinates" <|
+            \_ ->
+                Expect.equal (Just ()) (Grid.get { row = 0, column = 0 } grid)
+        , test "coordinates above the top row should return Nothing" <|
+            \_ ->
+                Expect.equal Nothing (Grid.get { row = -1, column = 0 } grid)
+        , test "coordinates below the bottom row should return Nothing" <|
+            \_ ->
+                Expect.equal Nothing (Grid.get { row = 1, column = 0 } grid)
+        , test "coordinates to the left of the leftmost column should return Nothing" <|
+            \_ ->
+                Expect.equal Nothing (Grid.get { row = 0, column = -1 } grid)
+        , test "coordinates to the right of the rightmost row should return Nothing" <|
+            \_ ->
+                Expect.equal Nothing (Grid.get { row = 0, column = 1 } grid)
+        ]
+
+
 getAndSetTest : Test
 getAndSetTest =
     fuzz coordsFuzzer "setting a value and then getting the same value should work" <|
