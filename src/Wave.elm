@@ -178,7 +178,7 @@ propagateInDirection :
     -> Direction
     -> ( Wave comparable, List { row : Int, column : Int } )
     -> ( Wave comparable, List { row : Int, column : Int } )
-propagateInDirection source cell direction ( Wave wave, todo ) =
+propagateInDirection source sourceCell direction ( Wave wave, todo ) =
     let
         target =
             Direction.move source direction
@@ -195,7 +195,7 @@ propagateInDirection source cell direction ( Wave wave, todo ) =
         Just (Open remaining) ->
             let
                 possibleInDirection =
-                    case cell of
+                    case sourceCell of
                         Collapsed value ->
                             Dict.get ( value, direction ) wave.rules
                                 |> Maybe.withDefault Set.empty
