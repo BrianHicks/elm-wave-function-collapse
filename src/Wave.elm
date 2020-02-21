@@ -1,4 +1,4 @@
-module Wave exposing (Cell(..), Wave, getEntropy, init, load, step, view)
+module Wave exposing (Cell(..), Wave, init, load, step, view)
 
 import Adjacency
 import Array
@@ -30,15 +30,6 @@ type Wave a comparable
         , items : Grid (Cell comparable)
         , windows : Dict comparable (Grid a)
         }
-
-
-
--- DEBUG INFO
-
-
-getEntropy : Wave a comparable -> Heap Entropy
-getEntropy (Wave guts) =
-    guts.entropy
 
 
 
