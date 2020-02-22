@@ -163,16 +163,17 @@ collapse seed coords (Wave wave) =
         Just (Open remaining) ->
             let
                 generator =
-                    wave.weights
-                        |> Dict.toList
-                        |> List.filterMap
-                            (\( k, weight ) ->
-                                if Set.member k remaining then
-                                    Just ( toFloat weight, k )
+                    remaining
+                        |> Set.foldl
+                            (\current acc ->
+                                case Dict.get current wave.weights of
+                                    Just weight ->
+                                        ( toFloat weight, current ) :: acc
 
-                                else
-                                    Nothing
+                                    Nothing ->
+                                        acc
                             )
+                            []
                         |> (\weights ->
                                 case weights of
                                     [] ->
