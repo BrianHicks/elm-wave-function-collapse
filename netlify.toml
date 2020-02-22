@@ -1,5 +1,5 @@
 [build]
-  command = "mkdir dist; elm make --output=dist/index.html src/Main.elm"
+  command = "mkdir dist; elm make --optimize --output=dist/index.html src/Main.elm"
   publish = "./dist/"
 
 [build.environment]
