@@ -52,6 +52,12 @@ type Msg
     | Reset
     | SetDimUnknown Bool
     | SetRandomSeed Random.Seed
+    | SetWaveSizeWidth String
+    | SetWaveSizeHeight String
+    | SetWindowSize { width : Int, height : Int }
+    | SetImage Image
+    | ResetDraftOptions
+    | ApplyOptions
 
 
 init : () -> ( Model, Cmd Msg )
@@ -145,6 +151,70 @@ update msg model =
         SetRandomSeed seed ->
             ( { model | seed = seed }, Cmd.none )
 
+        SetWaveSizeWidth input ->
+            case String.toInt input of
+                Just width ->
+                    let
+                        oldDraft =
+                            model.draftOptions
+
+                        oldWaveSize =
+                            model.draftOptions.waveSize
+                    in
+                    ( { model | draftOptions = { oldDraft | waveSize = { oldWaveSize | width = width } } }, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        SetWaveSizeHeight input ->
+            case String.toInt input of
+                Just height ->
+                    let
+                        oldDraft =
+                            model.draftOptions
+
+                        oldWaveSize =
+                            model.draftOptions.waveSize
+                    in
+                    ( { model | draftOptions = { oldDraft | waveSize = { oldWaveSize | height = height } } }, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        SetWindowSize windowSize ->
+            let
+                oldDraft =
+                    model.draftOptions
+            in
+            ( { model | draftOptions = { oldDraft | windowSize = windowSize } }, Cmd.none )
+
+        SetImage image ->
+            let
+                oldDraft =
+                    model.draftOptions
+            in
+            ( { model | draftOptions = { oldDraft | image = image } }, Cmd.none )
+
+        ResetDraftOptions ->
+            ( { model | draftOptions = model.options }
+            , Cmd.none
+            )
+
+        ApplyOptions ->
+            ( { model
+                | options = model.draftOptions
+                , running = False
+                , wave =
+                    Wave.load
+                        { windowSize = model.draftOptions.windowSize
+                        , waveSize = model.draftOptions.waveSize
+                        , hash = imageHash
+                        }
+                        model.draftOptions.image
+              }
+            , Cmd.none
+            )
+
 
 main : Program () Model Msg
 main =
@@ -171,8 +241,88 @@ view model =
             [ Reset.meyerV2
             , Reset.borderBoxV201408
             , h1 [ Html.text "Wave Function Collapse" ]
-            , Html.form []
-                [ h2 [ Html.text "Options" ]
+            , h2 [ Html.text "Options" ]
+            , Html.form
+                [ css [ Css.displayFlex ]
+                , Events.onSubmit ApplyOptions
+                ]
+                [ fieldset
+                    [ legend [ Html.text "Wave" ]
+                    , Html.text "Wave Size"
+                    , Html.div []
+                        [ Html.input
+                            [ Attributes.type_ "number"
+                            , Attributes.min "1"
+                            , Attributes.value (String.fromInt model.draftOptions.waveSize.width)
+                            , Events.onInput SetWaveSizeWidth
+                            ]
+                            []
+                        , Html.text "×"
+                        , Html.input
+                            [ Attributes.type_ "number"
+                            , Attributes.min "1"
+                            , Attributes.value (String.fromInt model.draftOptions.waveSize.height)
+                            , Events.onInput SetWaveSizeHeight
+                            ]
+                            []
+                        ]
+                    , Html.text "Window Size"
+                    , [ ( { width = 1, height = 1 }, "absurd" )
+                      , ( { width = 2, height = 2 }, "default" )
+                      , ( { width = 3, height = 3 }, "expensive" )
+                      ]
+                        |> List.map
+                            (\( size, comment ) ->
+                                Html.label []
+                                    [ Html.input
+                                        [ Attributes.type_ "radio"
+                                        , Attributes.attribute "radiogroup" "windowsize"
+                                        , Attributes.checked (model.draftOptions.windowSize == size)
+                                        , Events.onCheck (\_ -> SetWindowSize size)
+                                        ]
+                                        []
+                                    , Html.text (String.fromInt size.width ++ "×" ++ String.fromInt size.height ++ " (" ++ comment ++ ")")
+                                    ]
+                            )
+                        |> Html.div []
+                    , Html.text "Image"
+                    , [ ( Image.bars, "Bars" )
+                      , ( Image.mondrianCompositionIIinRedBlueAndYellow, "Composition II" )
+                      , ( Image.nyan, "Nyan Cat" )
+                      , ( Image.recurse, "RC Logo" )
+                      , ( Image.waves, "Waves" )
+                      ]
+                        |> List.map
+                            (\( image, name ) ->
+                                Html.label []
+                                    [ Html.input
+                                        [ Attributes.type_ "radio"
+                                        , Attributes.attribute "radiogroup" "image"
+                                        , Attributes.checked (model.draftOptions.image == image)
+                                        , Events.onCheck (\_ -> SetImage image)
+                                        ]
+                                        []
+                                    , Html.text name
+                                    ]
+                            )
+                        |> Html.div []
+                    , if model.draftOptions /= model.options then
+                        Html.div []
+                            [ Html.button
+                                [ Attributes.type_ "button" -- submit is default
+                                , Events.onClick ResetDraftOptions
+                                ]
+                                [ Html.text "Reset Options" ]
+                            , Html.button
+                                [ Attributes.type_ "submit"
+                                , Events.onClick ApplyOptions
+                                ]
+                                [ Html.text "Apply" ]
+                            ]
+
+                      else
+                        Html.text ""
+                    ]
                 , fieldset
                     [ legend [ Html.text "View" ]
                     , Html.label []
@@ -186,26 +336,6 @@ view model =
                         ]
                     ]
                 ]
-
-            -- , [ ( "Waves", Image.waves )
-            --   , ( "Bars", Image.bars )
-            --   , ( "Recurse", Image.recurse )
-            --   , ( "Nyan Cat", Image.nyan )
-            --   , ( "Composition II", Image.mondrianCompositionIIinRedBlueAndYellow )
-            --   ]
-            --     |> List.map
-            --         (\( name, image ) ->
-            --             [ { width = 1, height = 1 }
-            --             , { width = 2, height = 2 }
-            --             , { width = 3, height = 3 }
-            --             ]
-            --                 |> List.map
-            --                     (\dimensions ->
-            --                         Html.button [ Events.onClick (Load image dimensions) ] [ Html.text (name ++ "(" ++ String.fromInt dimensions.height ++ "x" ++ String.fromInt dimensions.width ++ ")") ]
-            --                     )
-            --                 |> Html.p []
-            --         )
-            --     |> Html.div []
             , h2 [ Html.text "Wave" ]
             , Html.p []
                 [ if model.running then
@@ -316,7 +446,7 @@ fieldset =
     Html.fieldset
         [ css
             [ Css.border3 (Css.px 1) Css.solid (Css.hex "000")
-            , Css.padding (Css.px 5)
+            , Css.padding (Css.px 10)
             , Css.margin (Css.px 5)
             ]
         ]
